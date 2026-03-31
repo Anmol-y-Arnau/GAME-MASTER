@@ -118,61 +118,66 @@ No se declara tarea completada sin evidencia fresca:
 9. Verificar muestra de datos de sub-agentes antes de presentarlos
 10. Preferir "no estoy seguro" a estar equivocado
 
-## Sistema de Delegacion Obligatoria
+## Sistema de Delegacion Inteligente
 
-### 13 Auto-Triggers
+### 4 Niveles de Complejidad
 
-Estos triggers se disparan **automaticamente** segun el tipo de tarea. No necesitan que el usuario los pida.
+Cada tarea se clasifica antes de activar triggers, para escalar los recursos proporcionalmente:
 
-| Trigger | Se activa cuando... | Agente obligatorio |
-|---|---|---|
-| **PLAN** | >3 pasos o >2 archivos | `planner` |
-| **ARCH** | Nuevo modulo, tabla, API, reestructuracion | `architect` |
-| **CODE** | Escribir/modificar codigo | `coder` / `backend-dev` / especialista |
-| **TEST** | Codigo nuevo o modificado (SIEMPRE) | `tester` / `test-architect` |
-| **REVIEW** | Codigo producido (SIEMPRE) | `reviewer` + `code-analyzer` |
-| **SECURITY** | Auth, passwords, tokens, SQL, APIs, pagos | `security-auditor` |
-| **DB** | Schema, migraciones, queries, indices | `database-specialist` |
-| **PERF** | Queries, loops, rendering, bundle size | `performance-optimizer` |
-| **UI** | Componentes visuales, layouts, responsive | `frontend-design` + `ui-ux-pro-max` |
-| **DOCS** | API publica, funciones exportadas | `docs-lookup` |
-| **DEBUG** | Error, bug, test fallido | `systematic-debugging` |
-| **RESEARCH** | Libreria nueva, patron desconocido | `researcher` + `search-first` |
-| **DEPLOY** | Build, CI/CD, deploy | `cicd-engineer` |
+| Nivel | Descripcion | Agentes | Tokens estimados |
+|---|---|---|---|
+| **N1 Trivial** | 1-10 lineas, 1 archivo, mecanico (typo, string, CSS) | 0 | ~20-40K |
+| **N2 Simple** | 10-50 lineas, 1-2 archivos, logica directa | 1-2 | ~50-100K |
+| **N3 Moderado** | 50-200 lineas, 2-5 archivos, con dependencias | 3-5 | ~100-200K |
+| **N4 Complejo** | >200 lineas, >5 archivos, arquitectura | 6-10 | ~200-400K |
 
-### Cadena Minima Obligatoria
+### 13 Auto-Triggers con Umbrales
 
-Toda tarea de desarrollo DEBE pasar por esta cadena. Saltarse un paso = tarea incompleta.
+Los triggers se activan segun el nivel. No dispara la cadena completa para tareas triviales.
 
-```
-PLAN → ARCH → RESEARCH → CODE → TEST → REVIEW → SECURITY → VALIDATE
-  |       |        |         |       |       |         |          |
-planner  architect researcher coder  tester  reviewer  security  verification
-```
+| Trigger | N1 | N2 | N3 | N4 |
+|---|---|---|---|---|
+| **CODE** | Directo | `coder` | `coder` + especialista | `coder` + especialista |
+| **TEST** | No | 1-2 tests | Suite proporcional | TDD completo |
+| **REVIEW** | No | Ligero | `reviewer` | `reviewer` + `code-analyzer` |
+| **PLAN** | No | No | Si >3 pasos | SIEMPRE |
+| **ARCH** | No | No | Si nuevo modulo | SIEMPRE |
+| **SECURITY** | No | Solo si auth/SQL | Si aplica | SIEMPRE |
+| **DB** | No | No | Si schema/queries | `database-specialist` |
+| **PERF** | No | No | Si queries/loops | `performance-optimizer` |
+| **UI** | No | Skill puntual | `frontend-design` | + `ui-ux-pro-max` |
+| **RESEARCH** | No | Si libreria nueva | `search-first` | + `researcher` + `docs-lookup` |
+| **DEBUG** | Fix directo | Si no obvio | SIEMPRE | SIEMPRE |
 
-**Codigo sin tests = incompleto. Codigo sin review = incompleto. Sin excepciones.**
-
-### Ejecucion en Paralelo
-
-Agentes independientes se lanzan siempre en paralelo:
+### Cadenas segun Nivel
 
 ```
-BUENO:  reviewer + security-auditor + performance-optimizer → EN PARALELO
-MALO:   primero reviewer, luego security, luego performance → SECUENCIAL
+N1: CODE directo → verificacion basica
+N2: RESEARCH? → CODE (coder) → TEST (1-2) → review ligero
+N3: PLAN? → RESEARCH → CODE → TEST (suite) → REVIEW → SECURITY?
+N4: PLAN → ARCH → RESEARCH → CODE → TEST (TDD) → REVIEW+SECURITY+PERF (paralelo)
 ```
+
+**Codigo sin tests = incompleto (N2+). Codigo sin review = incompleto (N3+). Sin excepciones.**
+
+### Optimizaciones de Tokens
+
+1. **Agrupar reviews** — Un `reviewer` para todos los archivos, no uno por archivo
+2. **Skip research si verificado** — No relanzar si ya se verifico en esta sesion
+3. **Reusar contexto** — Si `planner` analizo arquitectura, no lanzar `architect` para lo mismo
+4. **Tests proporcionales** — N2: happy path. N3: + edge cases. N4: TDD completo
+5. **Paralelismo SIEMPRE** — Agentes independientes van en paralelo
 
 ### Reporte de Orquestacion
 
-Cada respuesta incluye tabla de agentes usados:
+Cada respuesta incluye metricas de eficiencia:
 
 ```
-| Agente              | Tarea                    | Resultado          |
-|---------------------|--------------------------|--------------------|
-| planner             | Plan de implementacion   | OK                 |
-| coder               | Implementacion de X      | OK                 |
-| tester              | 12 unit tests            | 12/12 pass         |
-| reviewer            | Code review              | 0 critical, 2 med  |
-| security-auditor    | Auth review              | OK                 |
+Nivel: N3 (moderado)
+Agentes usados: 3 de 4 requeridos
+Tokens estimados: ~120K
+Triggers activados: CODE, TEST, REVIEW
+Triggers omitidos: SECURITY (no toca auth/input)
 ```
 
 ## Flujo de Trabajo (6 pasos)

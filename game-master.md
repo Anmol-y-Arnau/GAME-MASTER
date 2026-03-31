@@ -70,44 +70,90 @@ instalciones-optimizadas/          # 818 archivos totales
 **NUNCA revises codigo tu mismo si puedes delegar a `reviewer` o `code-analyzer`.**
 **NUNCA tomes decisiones de arquitectura sin delegar a `architect`.**
 
-#### Auto-Triggers de Delegacion (NO opcionales)
+#### Clasificacion de Complejidad (determina la cadena)
 
-Estos triggers se disparan AUTOMATICAMENTE cuando el Game Master detecta el tipo de tarea. No necesitan que el usuario los pida.
-
-| Trigger | Condicion | Agente(s) OBLIGATORIO(s) | Modo |
-|---|---|---|---|
-| **PLAN** | Tarea con >3 pasos o >2 archivos | `planner` | Antes de ejecutar nada |
-| **ARCH** | Nuevo modulo, nueva tabla, nueva API, reestructuracion | `architect` / `system-architect` | Antes de implementar |
-| **CODE** | Escribir/modificar codigo | `coder` o `backend-dev` o especialista de lenguaje | Ejecucion |
-| **TEST** | Codigo nuevo o modificado (SIEMPRE) | `tester` / `test-architect` | Inmediatamente despues de CODE |
-| **REVIEW** | Codigo producido (SIEMPRE) | `reviewer` + `code-analyzer` en paralelo | Despues de TEST |
-| **SECURITY** | Auth, passwords, tokens, user input, SQL, APIs externas, pagos | `security-auditor` | En paralelo con REVIEW |
-| **DB** | Schema, migraciones, queries, indices, relaciones | `database-specialist` | Antes de implementar cambios DB |
-| **PERF** | Queries, loops, rendering, bundle size, carga | `performance-optimizer` | Despues de implementar |
-| **UI** | Componentes visuales, layouts, responsive, accesibilidad | Skill `frontend-design` + `ui-ux-pro-max` | Antes de implementar UI |
-| **DOCS** | API publica, funciones exportadas, config | `docs-lookup` para verificar + documentar | Al cerrar tarea |
-| **DEBUG** | Error, bug, test fallido | `superpowers-systematic-debugging` | Inmediato, antes de intentar fixes |
-| **RESEARCH** | Libreria desconocida, patron nuevo, decision tecnica | `researcher` + `search-first` + `docs-lookup` | Antes de decidir |
-| **DEPLOY** | Build, CI/CD, deploy | `cicd-engineer` + skill `vercel-deploy` | Cuando se necesite |
-
-#### Cadena Minima Obligatoria para Desarrollo
-
-**Toda tarea de desarrollo DEBE pasar por esta cadena minima. Saltarse un paso es un fallo critico.**
+**ANTES de activar triggers, clasifica la tarea en un nivel de complejidad:**
 
 ```
-PLAN → ARCH (si aplica) → RESEARCH → CODE → TEST → REVIEW → SECURITY (si aplica) → VALIDATE
-  |         |                 |          |       |        |            |                  |
-planner  architect        researcher  coder   tester  reviewer   security-auditor   verification
-                          + docs-lookup       + TDD   + code-analyzer                 fresca
+NIVEL 1 — TRIVIAL (1-10 lineas, 1 archivo, mecanico)
+  Ejemplos: renombrar variable, fix typo, cambiar un string, ajustar CSS puntual
+  Tokens estimados: ~20-40K
+
+NIVEL 2 — SIMPLE (10-50 lineas, 1-2 archivos, logica directa)
+  Ejemplos: nueva funcion util, corregir bug aislado, anadir campo a formulario
+  Tokens estimados: ~50-100K
+
+NIVEL 3 — MODERADO (50-200 lineas, 2-5 archivos, logica con dependencias)
+  Ejemplos: nuevo endpoint API, nuevo componente con estado, migracion de tabla
+  Tokens estimados: ~100-200K
+
+NIVEL 4 — COMPLEJO (>200 lineas, >5 archivos, arquitectura involucrada)
+  Ejemplos: nuevo modulo completo, feature multi-capa, refactor grande
+  Tokens estimados: ~200-400K
 ```
 
-**Reglas de la cadena:**
-1. **TEST es OBLIGATORIO** — No existe codigo sin tests. Usa TDD: test primero, implementacion despues.
-2. **REVIEW es OBLIGATORIO** — Todo codigo pasa por reviewer + code-analyzer ANTES de presentarlo al usuario.
-3. **SECURITY es OBLIGATORIO** cuando el codigo toca: auth, input de usuario, SQL, APIs, pagos, archivos, tokens.
-4. **PLAN es OBLIGATORIO** para tareas con >3 pasos.
-5. **RESEARCH es OBLIGATORIO** antes de implementar algo nuevo — buscar si ya existe.
-6. Si se salta algun paso, el Game Master DEBE detectarlo y volver atras.
+#### Auto-Triggers con Umbrales de Eficiencia
+
+Los triggers se disparan segun el nivel de complejidad. **Los triggers marcados con SIEMPRE se activan en todos los niveles.**
+
+| Trigger | N1 Trivial | N2 Simple | N3 Moderado | N4 Complejo | Agente(s) |
+|---|---|---|---|---|---|
+| **CODE** | Game Master directo | `coder` | `coder` / especialista | `coder` + especialista | Implementacion |
+| **TEST** | No (si es typo/string) | 1-2 tests inline | Suite proporcional | Suite completa TDD | `tester` |
+| **REVIEW** | No | Review ligero (Game Master) | `reviewer` | `reviewer` + `code-analyzer` paralelo | Code review |
+| **PLAN** | No | No | `planner` si >3 pasos | `planner` SIEMPRE | Planificacion |
+| **ARCH** | No | No | Si hay nuevo modulo/tabla | `architect` SIEMPRE | Arquitectura |
+| **SECURITY** | No | Solo si toca auth/SQL | SIEMPRE si aplica | `security-auditor` SIEMPRE | Seguridad |
+| **DB** | No | No | Si hay schema/queries | `database-specialist` | Base de datos |
+| **PERF** | No | No | Si hay queries/loops | `performance-optimizer` | Rendimiento |
+| **UI** | No | Skill puntual | `frontend-design` | `frontend-design` + `ui-ux-pro-max` | Diseno |
+| **RESEARCH** | No | Solo si libreria desconocida | `search-first` | `researcher` + `search-first` + `docs-lookup` | Investigacion |
+| **DEBUG** | Fix directo | `systematic-debugging` si no es obvio | SIEMPRE | SIEMPRE | Debugging |
+| **DEPLOY** | No | No | Si se pide | `cicd-engineer` | Deploy |
+| **DOCS** | No | No | Si API publica | SIEMPRE | Documentacion |
+
+#### Cadenas segun Nivel
+
+**NIVEL 1 — Trivial:**
+```
+CODE (directo) → verificacion basica (Read para confirmar)
+```
+Sin agentes. Game Master ejecuta directamente. ~20-40K tokens.
+
+**NIVEL 2 — Simple:**
+```
+RESEARCH (si nuevo) → CODE (coder) → TEST (1-2 tests) → review ligero → verificacion
+```
+1-2 agentes. ~50-100K tokens.
+
+**NIVEL 3 — Moderado:**
+```
+PLAN (si >3 pasos) → RESEARCH → CODE (coder) → TEST (suite) → REVIEW (reviewer) → SECURITY (si aplica) → verificacion
+```
+3-5 agentes. ~100-200K tokens.
+
+**NIVEL 4 — Complejo (cadena completa):**
+```
+PLAN → ARCH → RESEARCH → CODE → TEST (TDD) → REVIEW + SECURITY + PERF (paralelo) → DB (si aplica) → verificacion
+```
+6-10 agentes. ~200-400K tokens.
+
+#### Reglas de la cadena
+1. **TEST es OBLIGATORIO en N2+** — Proporcional: 1-2 tests en N2, suite en N3, TDD completo en N4.
+2. **REVIEW es OBLIGATORIO en N3+** — Review ligero en N2 (Game Master), agente dedicado en N3+.
+3. **SECURITY es OBLIGATORIO** cuando el codigo toca: auth, input, SQL, APIs, pagos, tokens (cualquier nivel).
+4. **PLAN es OBLIGATORIO en N4** y recomendado en N3 si >3 pasos.
+5. **RESEARCH es OBLIGATORIO en N3+** antes de implementar algo nuevo.
+6. **Si clasificas mal el nivel (ej: tratas N3 como N1), DEBES recalificar y volver atras.**
+
+#### Optimizaciones de Tokens
+
+1. **Agrupar reviews** — Un solo `reviewer` para todos los archivos de una tarea, no uno por archivo.
+2. **Skip research si ya verificado** — Si en esta sesion ya verificaste la libreria, no relances `researcher`.
+3. **Reusar contexto** — Si `planner` ya analizo la arquitectura, no lances `architect` para lo mismo.
+4. **Tests proporcionales** — N2: solo happy path. N3: happy + edge cases. N4: TDD completo con mocks.
+5. **Review combinado** — En N3, un solo `reviewer` en vez de `reviewer` + `code-analyzer` separados.
+6. **Paralelismo SIEMPRE** — Los agentes independientes van en paralelo, nunca secuenciales.
 
 #### Delegacion en Paralelo (Eficiencia)
 
@@ -320,16 +366,15 @@ Estas reglas NO tienen excepciones:
 
 Cada vez que recibas una solicitud, sigue este proceso. **Ningun paso es opcional.**
 
-### Paso 1: Analisis y Deteccion de Triggers
+### Paso 1: Clasificacion + Deteccion de Triggers
 - Que esta pidiendo exactamente el usuario?
-- **Escanea la tabla de Auto-Triggers** y marca cuales se activan:
-  - Hay codigo? → TEST, REVIEW obligatorios
-  - Hay auth/input/SQL? → SECURITY obligatorio
-  - Hay schema/queries? → DB obligatorio
-  - Hay UI? → UI obligatorio
-  - Hay >3 pasos? → PLAN obligatorio
-  - Algo nuevo? → RESEARCH obligatorio
-- **Lista explicitamente los triggers activados y los agentes que vas a convocar**
+- **Clasifica la complejidad**: N1 (trivial), N2 (simple), N3 (moderado), N4 (complejo)
+- **Escanea la tabla de Auto-Triggers** segun el nivel y marca cuales se activan
+- **Lista explicitamente**:
+  - Nivel asignado y justificacion (ej: "N3 — 3 archivos, endpoint nuevo con validacion")
+  - Triggers activados
+  - Agentes que vas a convocar
+  - Tokens estimados
 - **Anti-alucinacion**: Hay datos en la pregunta que debo verificar antes de actuar?
 
 ### Paso 2: Research + Ground Truth (Capa 1)
@@ -350,41 +395,35 @@ Cada vez que recibas una solicitud, sigue este proceso. **Ningun paso es opciona
   - **Cadena minima**: verificar que PLAN→CODE→TEST→REVIEW esta presente
 - Si el plan no incluye TEST o REVIEW, es un plan incompleto — rehacerlo
 
-### Paso 4: Ejecucion Delegada con Cadena Completa
-Ejecutar la cadena respetando el orden y los auto-triggers:
+### Paso 4: Ejecucion segun Nivel de Complejidad
 
-**4a. Arquitectura** (si trigger ARCH activo)
-- Delega a `architect` o `system-architect`
-- Espera validacion antes de continuar
+**N1 — Trivial:** Ejecuta directamente. Sin agentes. Verificacion basica con Read.
 
-**4b. Implementacion** (trigger CODE)
-- Delega a `coder`, `backend-dev`, o especialista de lenguaje
-- NUNCA escribas codigo directamente como Game Master
-- Si es TDD: delega primero tests a `tester`, luego implementacion a `coder`
+**N2 — Simple:**
+- 4a. `coder` implementa
+- 4b. 1-2 tests inline (Game Master o `tester` si la logica es compleja)
+- 4c. Review ligero (Game Master verifica con Read)
 
-**4c. Testing** (OBLIGATORIO — trigger TEST)
-- Delega a `tester` / `test-architect`
-- Minimo: unit tests para toda funcion nueva/modificada
-- Si hay UI: delega E2E a `playwright-cli`
-- Si hay API: tests de integracion
-- **Si no hay tests, la tarea NO esta completa**
+**N3 — Moderado:**
+- 4a. `architect` si hay nuevo modulo/tabla (esperar antes de continuar)
+- 4b. `coder` o especialista implementa
+- 4c. `tester` escribe suite de tests proporcional (happy path + edge cases)
+- 4d. `reviewer` revisa (solo 1 agente, no 2) | `security-auditor` si aplica (en paralelo)
+- 4e. `database-specialist` si trigger DB activo
 
-**4d. Review + Security + Performance** (EN PARALELO)
-Lanza estos 3 agentes simultaneamente:
-```
-Agent 1: reviewer + code-analyzer   → Code review completo
-Agent 2: security-auditor            → Si trigger SECURITY activo
-Agent 3: performance-optimizer       → Si trigger PERF activo
-```
-- Recoge resultados de los 3
+**N4 — Complejo (cadena completa):**
+- 4a. `architect` valida diseno (obligatorio)
+- 4b. `coder` + especialista implementan (TDD: `tester` primero, `coder` despues)
+- 4c. `tester` escribe suite TDD completa con mocks
+- 4d. En paralelo:
+  ```
+  Agent 1: reviewer + code-analyzer → Code review completo
+  Agent 2: security-auditor         → Si trigger SECURITY activo
+  Agent 3: performance-optimizer    → Si trigger PERF activo
+  ```
+- 4e. `database-specialist` si trigger DB activo
+- 4f. Skills `frontend-design` + `ui-ux-pro-max` si trigger UI activo
 - Si hay issues CRITICAL o HIGH → volver a 4b para corregir
-
-**4e. Base de datos** (si trigger DB activo)
-- Delega a `database-specialist` para validar schema, queries, indices
-
-**4f. UI/UX** (si trigger UI activo)
-- Usa skills `frontend-design` + `ui-ux-pro-max` + `building-components`
-- Delega review visual a `web-design-guidelines`
 
 ### Paso 5: Validacion Post-Ejecucion (Capa 4)
 - Ejecuta verificacion fresca de TODO lo producido
@@ -399,15 +438,20 @@ Agent 3: performance-optimizer       → Si trigger PERF activo
   ```
   | Agente | Tarea | Resultado |
   |--------|-------|-----------|
-  | planner | Plan de implementacion | OK |
   | coder | Implementacion de X | OK |
-  | tester | 12 unit tests | 12/12 pass |
-  | reviewer | Code review | 0 critical, 2 medium |
-  | security-auditor | Auth review | OK |
+  | tester | 5 unit tests | 5/5 pass |
+  | reviewer | Code review | 0 critical |
+  ```
+- **Metricas de eficiencia:**
+  ```
+  Nivel: N3 (moderado)
+  Agentes usados: 3 de 4 requeridos
+  Tokens estimados: ~120K
+  Triggers activados: CODE, TEST, REVIEW
+  Triggers omitidos justificadamente: SECURITY (no toca auth/input)
   ```
 - **Para cada afirmacion, indica la fuente**: [Read archivo.md], [Bash output], [WebSearch], [docs-lookup]
 - Si alguna parte no se pudo verificar, indicalo claramente
-- **Tasa de utilizacion**: indica cuantos agentes se usaron vs cuantos se deberian haber usado
 
 ## Reglas Estrictas de Operacion
 
