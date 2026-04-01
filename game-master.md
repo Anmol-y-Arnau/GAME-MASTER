@@ -155,9 +155,84 @@ PLAN → ARCH → RESEARCH → CODE → TEST (TDD) → REVIEW + SECURITY + PERF 
 5. **Review combinado** — En N3, un solo `reviewer` en vez de `reviewer` + `code-analyzer` separados.
 6. **Paralelismo SIEMPRE** — Los agentes independientes van en paralelo, nunca secuenciales.
 
-#### Tabla de Decision Explicita — Herramienta Optima por Situacion
+#### Sistema de Busqueda Dinamica de Herramienta Optima (OBLIGATORIO)
 
-**ESTAS REGLAS SOBREESCRIBEN cualquier "intuicion" del modelo. No elegir — seguir la tabla.**
+**ANTES de delegar cualquier tarea a un agente generico (`coder`, `reviewer`, `researcher`), ejecuta este protocolo de busqueda. No usar intuicion — BUSCAR.**
+
+```
+PROTOCOLO DE BUSQUEDA (ejecutar SIEMPRE antes de delegar):
+
+1. DETECTAR DOMINIO
+   ¿De que trata la tarea? (codigo, DB, UI, seguridad, deploy, docs, test, debug, SEO, diseno...)
+
+2. BUSCAR AGENTE ESPECIALIZADO
+   → Glob en ~/.claude/agents/ y ~/.claude/agents/ruflo/ buscando keywords del dominio
+   → Si encuentras match → USAR ESE en vez del generico
+   → Ejemplo: tarea de "base de datos" → buscar *database* *db* → encontrar database-specialist.md → USAR
+
+3. BUSCAR SKILL ESPECIALIZADA
+   → Glob en ~/.claude/skills/ buscando keywords del dominio
+   → Si encuentras match → ACTIVAR ESA SKILL en la delegacion
+   → Ejemplo: tarea de "Django API" → buscar *django* → encontrar django-patterns/ → USAR
+
+4. BUSCAR HERRAMIENTA MCP ESPECIALIZADA
+   → Consultar tools MCP disponibles con ToolSearch buscando keywords del dominio
+   → Si hay MCP especifica → USAR EN VEZ DE Bash/WebSearch/herramienta generica
+   → Ejemplo: "deploy" → encontrar mcp__claude_ai_Vercel__deploy_to_vercel → USAR
+
+5. BUSCAR SLASH COMMAND ESPECIALIZADO
+   → Revisar commands disponibles buscando keywords del dominio
+   → Si hay comando → INVOCAR via Skill tool
+   → Ejemplo: "SEO de pagina" → encontrar /seo-audit → USAR
+
+SOLO si los 4 pasos no encuentran nada especializado → usar herramienta generica.
+```
+
+**Mapa de Categorias para Busqueda Rapida:**
+
+| Dominio detectado | Keywords de busqueda | Donde buscar |
+|---|---|---|
+| Base de datos | `database`, `db`, `schema`, `migration`, `query`, `sql` | agents/, skills/ |
+| Frontend / UI | `frontend`, `ui`, `ux`, `design`, `component`, `css`, `layout` | agents/, skills/ |
+| Backend / API | `backend`, `api`, `endpoint`, `server`, `rest`, `graphql` | agents/, skills/ |
+| Seguridad | `security`, `auth`, `token`, `vulnerability`, `scan` | agents/, skills/ |
+| Testing | `test`, `tdd`, `e2e`, `playwright`, `coverage` | agents/, skills/ |
+| Deploy / CI/CD | `deploy`, `vercel`, `ci`, `cd`, `pipeline`, `docker` | agents/, skills/, MCP Vercel |
+| SEO | `seo`, `meta`, `crawl`, `schema`, `keywords` | commands/ (14 comandos SEO) |
+| Rendimiento | `performance`, `benchmark`, `optimize`, `bottleneck` | agents/, skills/, MCP ruflo |
+| Documentacion | `docs`, `documentation`, `lookup`, `api-design` | agents/, skills/ |
+| Diseno visual | `canvas`, `theme`, `art`, `typography`, `color` | skills/ (canvas-design, theme-factory, algorithmic-art) |
+| Memoria/Estado | `memory`, `store`, `search`, `session`, `context` | MCP ruflo (memory_*, agentdb_*) |
+| Git / GitHub | `git`, `pr`, `issue`, `release`, `workflow`, `repo` | agents/ruflo/github/, MCP ruflo (github_*) |
+| Swarm / Multi-agente | `swarm`, `hive`, `parallel`, `coordinate`, `orchestrate` | agents/ruflo/swarm/, MCP ruflo (swarm_*, coordination_*) |
+| Machine Learning | `ml`, `neural`, `train`, `model`, `embedding` | agents/ruflo/neural/, skills/, MCP ruflo (neural_*, embeddings_*) |
+| Contenido / Escritura | `content`, `article`, `writing`, `humanizer`, `research` | skills/ (content-engine, article-writing, humanizer) |
+| Browser / Scraping | `browser`, `chrome`, `scrape`, `web-reader`, `automation` | skills/, MCP ruflo (browser_*) |
+| Workflow / Automatizacion | `workflow`, `automation`, `hook`, `cron`, `loop` | MCP ruflo (workflow_*), skills/ |
+
+**Ejemplo del protocolo en accion:**
+
+```
+Usuario pide: "Optimiza las queries de la base de datos"
+
+1. DETECTAR DOMINIO: Base de datos + Rendimiento
+2. BUSCAR AGENTE: Glob *database* → database-specialist.md ENCONTRADO
+   Glob *performance* → performance-optimizer ENCONTRADO
+3. BUSCAR SKILL: Glob *database* → database-migrations/ ENCONTRADO
+   Glob *performance* → performance-analysis/ ENCONTRADO
+4. BUSCAR MCP: ToolSearch "performance" → mcp__ruflo__performance_benchmark ENCONTRADO
+   ToolSearch "database" → no match directo
+5. BUSCAR COMMAND: no match directo
+
+DECISION: Delegar a database-specialist + performance-optimizer (en paralelo)
+           Activar skills database-migrations + performance-analysis
+           Usar mcp__ruflo__performance_benchmark para metricas
+           NO usar coder generico
+```
+
+#### Tabla de Decision Explicita — Casos Conocidos
+
+**Para los casos mas frecuentes, la busqueda ya esta resuelta. Usar directamente:**
 
 ##### Seleccion de Agente por Stack (detectar ANTES de delegar CODE)
 
