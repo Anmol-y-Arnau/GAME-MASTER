@@ -155,6 +155,83 @@ PLAN → ARCH → RESEARCH → CODE → TEST (TDD) → REVIEW + SECURITY + PERF 
 5. **Review combinado** — En N3, un solo `reviewer` en vez de `reviewer` + `code-analyzer` separados.
 6. **Paralelismo SIEMPRE** — Los agentes independientes van en paralelo, nunca secuenciales.
 
+#### Tabla de Decision Explicita — Herramienta Optima por Situacion
+
+**ESTAS REGLAS SOBREESCRIBEN cualquier "intuicion" del modelo. No elegir — seguir la tabla.**
+
+##### Seleccion de Agente por Stack (detectar ANTES de delegar CODE)
+
+```
+PRIMERO: detectar el stack del proyecto con Glob/Read (package.json, pyproject.toml, go.mod, Cargo.toml, etc.)
+LUEGO: usar el agente correcto segun la tabla:
+```
+
+| Stack detectado | Agente para CODE | Agente para REVIEW | Como detectar |
+|---|---|---|---|
+| TypeScript / JavaScript | `typescript-specialist` | `typescript-specialist` (review mode) | `package.json`, `tsconfig.json`, archivos `.ts`/`.tsx` |
+| Python | `python-specialist` | `python-specialist` (review mode) | `pyproject.toml`, `requirements.txt`, archivos `.py` |
+| Kotlin / Android | `kotlin-reviewer` | `kotlin-reviewer` | `build.gradle.kts`, archivos `.kt` |
+| C++ | `cpp-reviewer` | `cpp-reviewer` | `CMakeLists.txt`, archivos `.cpp`/`.h` |
+| Flutter / Dart | `flutter-reviewer` | `flutter-reviewer` | `pubspec.yaml`, archivos `.dart` |
+| Go | `coder` + skill `golang-patterns` | Skill `go-review` | `go.mod`, archivos `.go` |
+| Rust | `coder` + skill `rust-patterns` | Skill `rust-review` | `Cargo.toml`, archivos `.rs` |
+| React / Next.js | `typescript-specialist` + skill `vercel-react-best-practices` | `reviewer` + skill `frontend-patterns` | `next.config.*`, imports de React |
+| Stack mixto | `coder` (generico) | `reviewer` + `code-analyzer` | Multiples lenguajes |
+
+**NUNCA uses `coder` generico si el stack tiene especialista disponible.**
+
+##### Seleccion de Herramienta por Operacion
+
+| Operacion | Herramienta CORRECTA | Herramienta INCORRECTA | Por que |
+|---|---|---|---|
+| Buscar en memoria de sesiones previas | `mcp__ruflo__memory_search` | `Grep` en archivos | Ruflo tiene busqueda semantica HNSW, Grep es literal |
+| Buscar patron en codigo | `Grep` con regex | `Bash` + `grep` | Grep nativo tiene permisos y output optimizado |
+| Buscar archivos por nombre | `Glob` | `Bash` + `find` | Glob es mas rapido y seguro |
+| Leer contenido de archivo | `Read` | `Bash` + `cat` | Read tiene numeracion y limites |
+| Verificar docs de libreria | `docs-lookup` (Context7 MCP) | `WebSearch` | Context7 da docs oficiales actualizadas, WebSearch da ruido |
+| Verificar version de paquete | `Bash` + `npm info`/`pip index versions` | Conocimiento del modelo | Versiones cambian, el modelo no sabe las actuales |
+| Verificar si comando existe | `Bash` + `which` o `--help` | Asumir que existe | Evita errores por comandos no instalados |
+| Investigar libreria nueva | `researcher` + `search-first` | Empezar a codificar | search-first ahorra reescrituras |
+| Crear componente UI | Skill `frontend-design` + `building-components` | `coder` generico | Skills de diseno tienen guidelines de accesibilidad, tokens, responsive |
+| Generar diseno visual | `ui-ux-pro-max` (67 estilos, 96 paletas) | Inventar colores/fuentes | El skill tiene datos curados |
+| Escribir tests E2E | Skill `playwright-cli` | `tester` generico | Playwright CLI tiene templates de page objects, mocking, tracing |
+| Auditar SEO | `/seo-audit` (slash command) | `WebSearch` manual | 14 comandos SEO especializados |
+| Deploy a Vercel | Skill `vercel-deploy` o MCP `mcp__claude_ai_Vercel__deploy_to_vercel` | `Bash` + `vercel` CLI manual | MCP tiene integracion directa |
+| Guardar decision/contexto importante | `mcp__ruflo__memory_store` | Comentario en codigo | Memoria persiste entre sesiones |
+| Analizar rendimiento | `mcp__ruflo__performance_benchmark` | Opinion sin datos | Benchmark da metricas reales |
+| Verificar estado de PR/issue | `mcp__ruflo__github_pr_manage` | `Bash` + `gh` manual | MCP tiene tracking integrado |
+| Automatizar browser | `chrome-bridge-automation` o `mcp__ruflo__browser_*` | Playwright directo | Bridge tiene vision AI, Ruflo tiene session management |
+
+##### Seleccion de Paralelismo
+
+| Situacion | Lanzar EN PARALELO | NUNCA en secuencia |
+|---|---|---|
+| Review + Security + Performance | `reviewer` + `security-auditor` + `performance-optimizer` | Son independientes, no se bloquean |
+| Tests unitarios + E2E | `tester` (unit) + `playwright-cli` (E2E) | No tienen dependencias cruzadas |
+| Research multi-fuente | `researcher` + `docs-lookup` + `search-first` | Cada uno busca en fuentes distintas |
+| Build + Lint + Typecheck | 3 comandos Bash en paralelo | Son verificaciones independientes |
+
+| Situacion | Lanzar EN SECUENCIA | Por que |
+|---|---|---|
+| Plan → Codigo | `planner` ANTES que `coder` | Coder necesita el plan |
+| Codigo → Tests | `coder` ANTES que `tester` (excepto TDD) | Tester necesita el codigo |
+| Review → Fix | `reviewer` ANTES que `coder` (fix) | Fix depende de los findings |
+
+##### Deteccion de Nivel Incorrecto (auto-correccion)
+
+**Si detectas alguna de estas senales, SUBE el nivel inmediatamente:**
+
+| Senal | Nivel minimo real |
+|---|---|
+| Necesitas modificar >2 archivos | N3 (no N1/N2) |
+| Aparece logica condicional compleja | N3 |
+| Tocas schema de base de datos | N3 |
+| Aparecen dependencias entre modulos | N3 |
+| Necesitas nuevo directorio/modulo | N4 |
+| Hay impacto en >3 componentes existentes | N4 |
+| El usuario dice "tiene que estar bien" / "es critico" | N4 |
+| Tocas auth, pagos, o datos sensibles | N3 minimo, N4 si es nuevo |
+
 #### Delegacion en Paralelo (Eficiencia)
 
 **Lanza SIEMPRE agentes independientes en paralelo, no en secuencia:**
