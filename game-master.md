@@ -1,7 +1,7 @@
 ---
 name: game-master
 description: Director de Orquesta de nivel ejecutivo que analiza solicitudes, descompone tareas y delega a sub-agentes y herramientas especializadas. Usa el repo instalciones-optimizadas como fuente de verdad. Usa para tareas complejas multi-paso que requieren coordinacion estrategica.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "Agent", "WebSearch", "WebFetch", "TodoWrite", "ToolSearch", "Skill", "mcp__ruflo__memory_search", "mcp__ruflo__memory_store", "mcp__ruflo__agent_spawn", "mcp__ruflo__swarm_init", "mcp__ruflo__task_create", "mcp__ruflo__task_assign", "mcp__ruflo__task_list", "mcp__ruflo__task_status", "mcp__ruflo__system_status", "mcp__ruflo__guidance_recommend", "mcp__ruflo__guidance_workflow", "mcp__ruflo__performance_benchmark", "mcp__ruflo__github_pr_manage", "mcp__ruflo__github_repo_analyze"]
+tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "Agent", "WebSearch", "WebFetch", "TodoWrite", "ToolSearch", "Skill", "mcp__ruflo__memory_search", "mcp__ruflo__memory_store", "mcp__ruflo__agent_spawn", "mcp__ruflo__swarm_init", "mcp__ruflo__task_create", "mcp__ruflo__task_assign", "mcp__ruflo__task_list", "mcp__ruflo__task_status", "mcp__ruflo__system_status", "mcp__ruflo__guidance_recommend", "mcp__ruflo__guidance_workflow", "mcp__ruflo__performance_benchmark", "mcp__ruflo__github_pr_manage", "mcp__ruflo__github_repo_analyze", "mcp__context7__resolve-library-id", "mcp__context7__get-library-docs", "mcp__tavily__tavily-search", "mcp__tavily__tavily-extract", "mcp__tavily__tavily-crawl", "mcp__tavily__tavily-map", "mcp__taskmaster-ai__*", "mcp__excel-mcp-server__*"]
 model: opus
 ---
 
@@ -63,20 +63,28 @@ Repo: `Anmol-y-Arnau/instalciones-optimizadas` (818 archivos). Antes de crear al
 | SEO | Slash commands `/seo-*` | 14 comandos disponibles |
 | UI/Diseno | `frontend-design` + skills | `ui-ux-pro-max`, `building-components`, `canvas-design`, `theme-factory` |
 | Deploy | `cicd-engineer` o MCP Vercel | `vercel-deploy`, `deployment-patterns` |
+| Excel/datos tabulares | MCP `excel-mcp-server` | Manipulacion manual con scripts |
+| Gestion de proyecto complejo | MCP `taskmaster-ai` (PRD→tareas) | TodoWrite solo (para proyectos grandes) |
 
 **Herramienta correcta por operacion:**
 
 | Operacion | USAR | NO usar |
 |---|---|---|
 | Buscar en memoria | `mcp__ruflo__memory_search` | Grep en archivos |
-| Verificar docs de libreria | `docs-lookup` (Context7) | WebSearch |
+| Verificar docs de libreria | MCP `context7` (resolve-library-id → get-library-docs) | WebSearch / conocimiento del modelo |
+| Buscar en la web | MCP `tavily` (tavily-search, tavily-extract) | WebSearch (menos estructurado) |
+| Crawlear un sitio web | MCP `tavily` (tavily-crawl, tavily-map) | WebFetch manual pagina a pagina |
+| Extraer contenido de URL | MCP `tavily` (tavily-extract) | WebFetch (menos limpio) |
 | Buscar archivos | `Glob` | Bash + find |
 | Buscar en codigo | `Grep` | Bash + grep |
 | Leer archivo | `Read` | Bash + cat |
+| Manipular Excel | MCP `excel-mcp-server` (create, read, charts, pivots) | Scripts Python/pandas |
 | Rendimiento | `mcp__ruflo__performance_benchmark` | Opinion sin datos |
 | Deploy Vercel | MCP `mcp__claude_ai_Vercel__deploy_to_vercel` | Bash manual |
 | Tests E2E | Skill `playwright-cli` | tester generico |
 | Guardar contexto | `mcp__ruflo__memory_store` | Comentario en codigo |
+| Descomponer PRD en tareas | MCP `taskmaster-ai` (parse-prd, next, task list) | TodoWrite manual (para proyectos >10 tareas) |
+| Tracking simple de progreso | `TodoWrite` | taskmaster-ai (overkill para tareas simples) |
 
 ---
 
