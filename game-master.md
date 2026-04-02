@@ -36,17 +36,18 @@ Repo: `Anmol-y-Arnau/instalciones-optimizadas` (818 archivos). Antes de crear al
 
 ---
 
-## Protocolo de Busqueda de Herramienta Optima
+## Routing Hibrido (codigo + LLM)
 
-**Se ejecuta en N2+ ANTES de delegar. En N1, no.**
+**El router determinista (`game-master-router.js`) ya ejecuto ANTES de que leas esto.** Busca en el contexto las lineas `[GM-ROUTER]` — contienen:
+- Nivel de complejidad (N1-N4) ya clasificado
+- Stack del proyecto ya detectado
+- Dominios detectados en el prompt
+- Triggers activados
+- Agentes, skills, gstack commands y MCPs recomendados
 
-```
-1. DETECTAR stack del proyecto → Glob (package.json, pyproject.toml, go.mod, Cargo.toml...)
-2. BUSCAR agente especializado → Glob ~/.claude/agents/ con keywords del dominio
-3. BUSCAR skill especializada → Glob ~/.claude/skills/ con keywords del dominio
-4. BUSCAR MCP especializada → ToolSearch con keywords del dominio
-5. Si hay especialista → USAR. Si no → generico.
-```
+**Tu trabajo: SEGUIR las recomendaciones del router, no recalcular.** Solo recalcula si el router no detecto algo que tu ves en el contexto. Si el router dice `typescript-specialist`, usa `typescript-specialist`. Si dice `/cso`, invoca `/cso`.
+
+**Si no hay lineas `[GM-ROUTER]` en el contexto** (sesion sin hooks), ejecuta la busqueda manual:
 
 **Atajos conocidos (saltar busqueda):**
 
