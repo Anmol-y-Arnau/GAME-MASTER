@@ -65,6 +65,20 @@ Repo: `Anmol-y-Arnau/instalciones-optimizadas` (818 archivos). Antes de crear al
 | Deploy | `cicd-engineer` o MCP Vercel | `vercel-deploy`, `deployment-patterns` |
 | Excel/datos tabulares | MCP `excel-mcp-server` | Manipulacion manual con scripts |
 | Gestion de proyecto complejo | MCP `taskmaster-ai` (PRD→tareas) | TodoWrite solo (para proyectos grandes) |
+| QA web con browser real | gstack `/qa` o `/qa-only` | Revisar manualmente sin browser |
+| Headless browser | gstack `/browse` | `chrome-bridge-automation` (menos completo) |
+| Review de producto/idea | gstack `/plan-ceo-review` | Review generico sin perspectiva CEO |
+| Review de arquitectura | gstack `/plan-eng-review` | `architect` solo (sin checklist eng manager) |
+| Review de diseno | gstack `/plan-design-review` + `/design-review` | `frontend-design` solo (sin QA visual) |
+| Consulta de diseno | gstack `/design-consultation` | Disenar sin research de mercado |
+| Variantes de diseno | gstack `/design-shotgun` | Una sola propuesta sin comparar |
+| HTML/CSS production | gstack `/design-html` | `coder` generico para UI |
+| Security audit (OWASP/STRIDE) | gstack `/cso` | `security-auditor` solo (sin infra audit) |
+| Ship completo (merge+test+PR) | gstack `/ship` | Pasos manuales separados |
+| Deploy + canary | gstack `/land-and-deploy` + `/canary` | Deploy sin monitoring |
+| Retrospectiva semanal | gstack `/retro` | Sin analisis de commits |
+| Pipeline review completo | gstack `/autoplan` | Reviews por separado |
+| Office hours (producto) | gstack `/office-hours` | Sin framework de preguntas |
 
 **Herramienta correcta por operacion:**
 
@@ -85,6 +99,16 @@ Repo: `Anmol-y-Arnau/instalciones-optimizadas` (818 archivos). Antes de crear al
 | Guardar contexto | `mcp__ruflo__memory_store` | Comentario en codigo |
 | Descomponer PRD en tareas | MCP `taskmaster-ai` (parse-prd, next, task list) | TodoWrite manual (para proyectos >10 tareas) |
 | Tracking simple de progreso | `TodoWrite` | taskmaster-ai (overkill para tareas simples) |
+| QA testing web app | gstack `/qa` (testea + arregla bugs) | Test manual sin browser |
+| QA report sin fix | gstack `/qa-only` (solo reporte) | `/qa` si no quieres auto-fix |
+| Navegar/testear web | gstack `/browse` (headless Playwright) | `chrome-bridge-automation` |
+| Review de producto | gstack `/plan-ceo-review` | Review generico |
+| Review de arquitectura | gstack `/plan-eng-review` | Solo `architect` |
+| Review de diseno visual | gstack `/design-review` | Solo `frontend-design` |
+| Security audit completo | gstack `/cso` (OWASP+STRIDE+secrets) | Solo `security-auditor` |
+| Ship workflow completo | gstack `/ship` (merge+test+review+bump+PR) | Pasos manuales |
+| Deploy + monitoring | gstack `/land-and-deploy` + `/canary` | Deploy sin canary |
+| Retrospectiva | gstack `/retro` | Sin analisis |
 
 ---
 
