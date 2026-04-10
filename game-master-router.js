@@ -120,7 +120,11 @@ const DOMAIN_KEYWORDS = {
   browser: { keywords: ['browser', 'chrome', 'scrape', 'web page', 'navigate', 'screenshot'], agents: [], skills: ['chrome-bridge-automation'], gstack: '/browse' },
   review: { keywords: ['review', 'revisar', 'code review', 'pr review', 'pull request'], agents: ['reviewer', 'code-analyzer'], skills: [], gstack: '/review' },
   planning: { keywords: ['plan', 'planifica', 'roadmap', 'prd', 'requirements', 'spec'], agents: ['planner', 'architect'], skills: ['make-plan', 'blueprint'], gstack: '/plan-ceo-review' },
-  excel: { keywords: ['excel', 'spreadsheet', 'xlsx', 'csv', 'pivot', 'chart'], agents: [], skills: [], mcp: 'excel-mcp-server' },
+  excel: { keywords: ['excel', 'spreadsheet', 'xlsx', 'csv', 'pivot', 'chart'], agents: [], skills: ['xlsx'], mcp: 'excel-mcp-server' },
+  documents: { keywords: ['pdf', 'contrato', 'contract', 'informe', 'report', 'documento', 'document', 'word', 'docx', 'powerpoint', 'pptx', 'presentacion', 'presentation', 'slide'], agents: [], skills: ['pdf', 'docx', 'pptx'] },
+  diagrams: { keywords: ['diagrama', 'diagram', 'flowchart', 'mermaid', 'sequence', 'gantt', 'er diagram', 'architecture diagram', 'visualizacion', 'visualization'], agents: [], skills: ['mermaidjs-v11'] },
+  mcp_dev: { keywords: ['mcp server', 'crear mcp', 'build mcp', 'fastmcp', 'mcp tool', 'mcp custom'], agents: [], skills: ['mcp-builder'] },
+  repo_analysis: { keywords: ['repomix', 'analizar repo', 'analyze repo', 'onboarding', 'codebase analysis', 'empaquetar repo', 'pack repo'], agents: [], skills: ['repomix'] },
   git: { keywords: ['git', 'commit', 'branch', 'merge', 'pr', 'pull request', 'push'], agents: ['pr-manager'], skills: [] },
 };
 

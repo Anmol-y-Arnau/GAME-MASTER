@@ -71,7 +71,13 @@ Cuando spawnes sub-agentes, SIEMPRE pasa el modelo correcto: `model: "haiku"` / 
 | SEO | Slash commands `/seo-*` | 14 comandos disponibles |
 | UI/Diseno | `frontend-design` + skills | `ui-ux-pro-max`, `building-components`, `canvas-design`, `theme-factory` |
 | Deploy | `cicd-engineer` o MCP Vercel | `vercel-deploy`, `deployment-patterns` |
-| Excel/datos tabulares | MCP `excel-mcp-server` | Manipulacion manual con scripts |
+| Excel/datos tabulares | MCP `excel-mcp-server` | Skill `xlsx` (claudekit document-skills) |
+| PDF (contratos, informes, forms) | Skill `pdf` | Crear/editar/merge/split PDFs con pypdf |
+| Word (documentos, contratos) | Skill `docx` | Crear/editar Word con tracked changes |
+| PowerPoint (presentaciones) | Skill `pptx` | Crear/editar slides con layouts |
+| Diagramas y visualizacion | Skill `mermaidjs-v11` | Flowcharts, ER, Gantt, sequence, 24+ tipos |
+| Crear MCP servers custom | Skill `mcp-builder` | Python (FastMCP) o TypeScript (MCP SDK) |
+| Analisis de repos / onboarding | Skill `repomix` | Empaquetar repos para analisis AI |
 | Gestion de proyecto complejo | MCP `taskmaster-ai` (PRD→tareas) | TodoWrite solo (para proyectos grandes) |
 | QA web con browser real | gstack `/qa` o `/qa-only` | Revisar manualmente sin browser |
 | Headless browser | gstack `/browse` | `chrome-bridge-automation` (menos completo) |
