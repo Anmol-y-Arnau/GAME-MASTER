@@ -99,11 +99,33 @@ Agent({
 
 **NUNCA** spawnes un agente con prompt generico como "revisa el codigo" o "arregla el bug".
 
-## REGLA 4 — Paralelismo
+## REGLA 4 — Paralelismo y Multi-Agente
 
-Agentes independientes SIEMPRE en paralelo, NUNCA secuenciales:
-- `reviewer` + `security-auditor` → paralelo (no se necesitan mutuamente)
-- `coder` → `tester` → secuencial (tester necesita el codigo)
+Agentes independientes SIEMPRE en paralelo, NUNCA secuenciales.
+
+**Patrones de paralelismo:**
+
+```
+# Patron 1: Review paralelo (N3+)
+EN PARALELO: reviewer + security-auditor + code-analyzer
+→ Cada uno reporta independientemente, consolidas resultados
+
+# Patron 2: Research paralelo (investigacion)
+EN PARALELO: Agent(deep-research, "buscar X") + Agent(exa-search, "buscar Y") + Agent(context7, "docs de Z")
+→ Consolidas hallazgos antes de decidir
+
+# Patron 3: Multi-perspectiva (decisiones criticas)
+EN PARALELO: Agent(reviewer, "evalua opcion A") + Agent(reviewer, "evalua opcion B")
+→ Comparas resultados para elegir
+
+# Patron 4: Divide-and-conquer (tareas grandes N4)
+EN PARALELO: Agent(coder, "modulo auth") + Agent(coder, "modulo payments") + Agent(coder, "modulo notifications")
+→ Cada uno trabaja en un modulo independiente
+```
+
+**Secuencial SOLO cuando hay dependencia:**
+- `coder` → `tester` (tester necesita el codigo)
+- `planner` → `coder` (coder necesita el plan)
 
 ## REGLA 5 — Model Routing
 
@@ -163,29 +185,144 @@ Nunca inventar URLs, versiones, flags, nombres de API. Nunca decir "deberia func
 
 ---
 
-## Herramienta Correcta por Operacion
+## Catalogo Completo de Skills y Herramientas
 
+El router detecta el dominio y recomienda skills. El catalogo completo:
+
+### Desarrollo
+| Operacion | Skill/Herramienta |
+|---|---|
+| Docs de libreria | MCP `context7` (NO WebSearch) |
+| Buscar en web | MCP `tavily` (NO WebSearch) |
+| QA web | `/qa` o `/qa-only` |
+| Ship completo | `/ship` (merge+test+review+PR) |
+| Deploy + canary | `/land-and-deploy` + `/canary` |
+| Security audit | `/cso` (OWASP+STRIDE) |
+| E2E tests | `playwright-cli` o `/e2e` |
+| TDD workflow | `/tdd` |
+
+### Documentos y Datos
+| Operacion | Skill |
+|---|---|
+| PDF | `pdf` |
+| Word/DOCX | `docx` |
+| PowerPoint | `pptx` |
+| Excel | `xlsx` + MCP `excel-mcp-server` |
+| Diagramas | `mermaidjs-v11` |
+
+### SEO (14 comandos)
+| Operacion | Comando |
+|---|---|
+| Auditoria completa | `/seo` (auto-detecta que necesitas) |
+| Meta tags | `/seo-meta` |
+| Headings | `/seo-headings` |
+| Schema/JSON-LD | `/seo-schema` |
+| Crawl/robots | `/seo-crawl` |
+| Imagenes | `/seo-images` |
+| Velocidad | `/seo-speed` |
+| Keywords | `/seo-keywords` |
+| Contenido | `/seo-content` |
+| Comparar vs competidor | `/seo-compare` |
+| Reporte completo | `/seo-report` |
+| Fix automatico | `/seo-fix` |
+| AI SEO (LLM search) | `ai-seo` |
+
+### Marketing y Ventas
+| Operacion | Skill |
+|---|---|
+| Ideas de marketing | `marketing-ideas` |
+| Psicologia/persuasion | `marketing-psychology` |
+| Estrategia de contenido | `content-strategy` |
+| Lanzamiento de producto | `launch-strategy` |
+| Producto/marca | `product-marketing-context` |
+| Cold email | `cold-email` |
+| Secuencias email | `email-sequence` |
+| Social media | `social-content` |
+| Copywriting | `copywriting` |
+| Ad creatives | `ad-creative` |
+| Paid ads (Google/Meta) | `paid-ads` |
+| Sales enablement | `sales-enablement` |
+| Lead magnets | `lead-magnets` |
+| Referral programs | `referral-program` |
+| Pricing strategy | `pricing-strategy` |
+| Revenue ops | `revops` |
+
+### CRO / Conversion
+| Operacion | Skill |
+|---|---|
+| Optimizar paginas | `page-cro` |
+| Formularios | `form-cro` |
+| Signup/registro | `signup-flow-cro` |
+| Onboarding post-signup | `onboarding-cro` |
+| Popups/modals | `popup-cro` |
+| Paywalls/upgrades | `paywall-upgrade-cro` |
+| Churn prevention | `churn-prevention` |
+| A/B testing | `ab-test-setup` |
+
+### Contenido
+| Operacion | Skill |
+|---|---|
+| Articulos/blog/guides | `article-writing` |
+| Content engine (multi-plataforma) | `content-engine` |
+| Research + writing | `content-research-writer` |
+| Quitar tono AI | `humanizer` |
+
+### Research
+| Operacion | Skill |
+|---|---|
+| Deep research (multi-fuente) | `deep-research` |
+| Neural search (Exa) | `exa-search` |
+| Research antes de codear | `search-first` |
+| Market research | `market-research` |
+| Competencia | `competitor-alternatives` |
+| Customer research | `customer-research` |
+
+### Video y Media
+| Operacion | Skill |
+|---|---|
+| Edicion de video | `video-editing` |
+| FFmpeg (convertir/cortar) | `ffmpeg` |
+| Explainer videos | `explainer-video-guide` |
+| Animaciones React | `remotion-best-practices` / `remotion-render` |
+| Motion design | `motion-designer` |
+| AI media (fal.ai) | `fal-ai-media` |
+
+### Debugging
+| Operacion | Skill |
+|---|---|
+| Investigacion sistematica | `investigate` |
+| 4-phase debugging | `showcase-systematic-debugging` |
+
+### Design Avanzado
+| Operacion | Skill |
+|---|---|
+| Design system | `design-system` |
+| Consulta de diseno | `design-consultation` |
+| Variantes (shotgun) | `design-shotgun` |
+| Awwwards animations | `awwwards-animations` |
+| UI polish (Emil style) | `emil-design-eng` |
+| HTML production | `design-html` |
+
+### Meta / Workflow
+| Operacion | Skill |
+|---|---|
+| Brainstorming | `superpowers-brainstorming` |
+| Planificar implementacion | `superpowers-writing-plans` |
+| Ejecutar plan con subagentes | `superpowers-executing-plans` |
+| Dispatchar agentes paralelos | `superpowers-dispatching-parallel-agents` |
+| Verificar antes de entregar | `superpowers-verification-before-completion` |
+| TDD workflow | `superpowers-test-driven-development` |
+| Code review recibido | `superpowers-receiving-code-review` |
+
+### Herramientas Base
 | Operacion | USAR | NO usar |
 |---|---|---|
-| Docs de libreria | MCP `context7` | WebSearch / conocimiento modelo |
-| Buscar en web | MCP `tavily` | WebSearch generico |
 | Buscar archivos | `Glob` | Bash + find |
 | Buscar en codigo | `Grep` | Bash + grep |
 | Leer archivo | `Read` | Bash + cat |
-| Excel | MCP `excel-mcp-server` + skill `xlsx` | Scripts Python |
-| PDF | Skill `pdf` | Bash manual |
-| Word | Skill `docx` | — |
-| PowerPoint | Skill `pptx` | — |
-| Diagramas | Skill `mermaidjs-v11` | — |
-| MCP custom | Skill `mcp-builder` | — |
-| Analisis repo | Skill `repomix` | — |
-| PRD → tareas | MCP `taskmaster-ai` | TodoWrite manual (>10 tareas) |
+| PRD → tareas | MCP `taskmaster-ai` | TodoWrite (>10 tareas) |
 | Progreso simple | `TodoWrite` | taskmaster-ai |
-| QA web | gstack `/qa` o `/qa-only` | Test manual |
-| Security audit | gstack `/cso` | `security-auditor` solo |
-| Ship completo | gstack `/ship` | Pasos manuales |
-| Deploy + canary | gstack `/land-and-deploy` + `/canary` | Deploy sin monitoring |
-| Guardar contexto | `mcp__ruflo__memory_store` | Comentario en codigo |
+| Guardar contexto | `mcp__ruflo__memory_store` | Comentarios |
 
 ---
 
