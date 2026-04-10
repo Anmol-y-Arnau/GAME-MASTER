@@ -181,6 +181,51 @@ function activateTriggers(level, domains, prompt) {
   return [...new Set(triggers)];
 }
 
+// ─── Model Selection (deterministic, cost-optimized) ───
+
+const MODEL_BY_LEVEL = {
+  N1: 'haiku',   // $0.8/$4 per 1M — trivial tasks
+  N2: 'sonnet',  // $3/$15 per 1M — 90% of real work
+  N3: 'sonnet',  // $3/$15 per 1M — moderate complexity
+  N4: 'opus',    // $15/$75 per 1M — deep reasoning only
+};
+
+function selectModel(level, domains) {
+  // Security audits and architecture decisions always get opus
+  const hasSecurity = domains.some(d => d.domain === 'security');
+  const hasArch = domains.some(d => d.domain === 'planning');
+  if ((hasSecurity || hasArch) && (level === 'N3' || level === 'N4')) return 'opus';
+  return MODEL_BY_LEVEL[level] || 'sonnet';
+}
+
+// ─── Tool Scoping (fewer tools = fewer errors, fewer tokens) ───
+
+const TOOL_SCOPES = {
+  N1: ['Read', 'Edit', 'Bash'],
+  N2: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob'],
+  N3: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob', 'WebSearch', 'TodoWrite'],
+  N4: ['Read', 'Write', 'Edit', 'Bash', 'Grep', 'Glob', 'Agent', 'WebSearch', 'WebFetch', 'TodoWrite', 'ToolSearch', 'Skill'],
+};
+
+const ROLE_TOOL_RESTRICTIONS = {
+  reviewer:  ['Read', 'Grep', 'Glob'],
+  'code-analyzer': ['Read', 'Grep', 'Glob'],
+  tester:    ['Read', 'Edit', 'Bash', 'Grep', 'Glob'],
+  researcher: ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch'],
+  planner:   ['Read', 'Grep', 'Glob', 'TodoWrite'],
+  architect: ['Read', 'Grep', 'Glob', 'TodoWrite'],
+  'security-auditor': ['Read', 'Grep', 'Glob', 'Bash'],
+};
+
+function getToolScope(level, agents) {
+  const base = TOOL_SCOPES[level] || TOOL_SCOPES.N2;
+  const perAgent = {};
+  for (const agent of agents) {
+    perAgent[agent] = ROLE_TOOL_RESTRICTIONS[agent] || base;
+  }
+  return { base, perAgent };
+}
+
 // ─── Main Router ───
 
 function routePrompt(prompt, cwd) {
@@ -218,8 +263,13 @@ function routePrompt(prompt, cwd) {
   if (triggers.includes('SECURITY')) agents.add('security-auditor');
   if (triggers.includes('DB')) agents.add('database-specialist');
 
+  // Model + tool scoping (cost optimization)
+  const model = selectModel(level, domains);
+  const toolScope = getToolScope(level, [...agents]);
+
   return {
     level,
+    model,
     stacks: stacks.map(s => s.stack),
     domains: domains.map(d => d.domain),
     triggers,
@@ -227,6 +277,7 @@ function routePrompt(prompt, cwd) {
     skills: [...skills],
     gstack: [...gstackCmds],
     mcps: [...mcps],
+    toolScope,
   };
 }
 
@@ -277,12 +328,25 @@ function handleUserPromptSubmit(input) {
   // Skip routing for trivial/fast requests
   if (routing.level === 'N1' && routing.domains.length === 0) return null;
 
+  // Build tool scope summary for agents with restrictions
+  const toolScopeLines = [];
+  if (routing.toolScope && routing.toolScope.perAgent) {
+    for (const [agent, tools] of Object.entries(routing.toolScope.perAgent)) {
+      if (tools.length < (routing.toolScope.base || []).length) {
+        toolScopeLines.push(`  ${agent}: [${tools.join(', ')}]`);
+      }
+    }
+  }
+
   const lines = [
     `[GM-ROUTER] Nivel: ${routing.level}`,
+    `[GM-ROUTER] Modelo recomendado: ${routing.model}`,
     `[GM-ROUTER] Stack: ${routing.stacks.join(', ')}`,
     routing.domains.length > 0 ? `[GM-ROUTER] Dominios: ${routing.domains.join(', ')}` : null,
     `[GM-ROUTER] Triggers: ${routing.triggers.join(', ') || 'ninguno'}`,
     `[GM-ROUTER] Agentes recomendados: ${routing.agents.join(', ')}`,
+    `[GM-ROUTER] Tools base (nivel ${routing.level}): ${(routing.toolScope?.base || []).join(', ')}`,
+    toolScopeLines.length > 0 ? `[GM-ROUTER] Tool restrictions por agente:\n${toolScopeLines.join('\n')}` : null,
     routing.skills.length > 0 ? `[GM-ROUTER] Skills recomendadas: ${routing.skills.join(', ')}` : null,
     routing.gstack.length > 0 ? `[GM-ROUTER] gstack commands: ${routing.gstack.join(', ')}` : null,
     routing.mcps.length > 0 ? `[GM-ROUTER] MCPs especializadas: ${routing.mcps.join(', ')}` : null,

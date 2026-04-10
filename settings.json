@@ -1,0 +1,113 @@
+{
+  "effortLevel": "high",
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "NotebookEdit",
+      "Agent",
+      "mcp__desktop-control__computer",
+      "mcp__ruflo__*",
+      "mcp__context7__*",
+      "mcp___21st-dev_magic__*",
+      "mcp__claude_ai_Vercel__*",
+      "mcp__excel-mcp-server__*",
+      "mcp__taskmaster-ai__*",
+      "mcp__tavily__*"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/gm-session-start.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/gm-prompt-route.js",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/post-edit-format.js",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/post-edit-typecheck.js",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/post-edit-console-warn.js",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/quality-gate.js",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/suggest-compact.js",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/session-end.js",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/check-console-log.js",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node /Users/arnaucamprubifalcon/.claude/scripts/hooks/cost-tracker.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
