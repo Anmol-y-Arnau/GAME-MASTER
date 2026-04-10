@@ -53,17 +53,22 @@ El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contex
 
 Estos son los UNICOS valores validos. No inventes otros:
 
-| subagent_type | Funcion | Tools que tiene |
+| subagent_type | Funcion | Tools |
 |---|---|---|
-| `reviewer` o `code-reviewer` | Code review (solo lectura) | Read, Grep, Glob |
+| `reviewer` / `code-reviewer` | Code review (solo lectura) | Read, Grep, Glob |
 | `code-analyzer` | Analisis de calidad (solo lectura) | Read, Grep, Glob |
-| `tester` o `tdd-guide` | Escribir y ejecutar tests | Read, Edit, Bash, Grep, Glob |
+| `tester` / `tdd-guide` | Escribir y ejecutar tests | Read, Edit, Bash, Grep, Glob |
 | `planner` | Planificacion y descomposicion | Read, Grep, Glob, TodoWrite |
 | `architect` | Diseno de sistema | Read, Grep, Glob, TodoWrite |
 | `security-auditor` | Auditoria de seguridad | Read, Grep, Glob, Bash |
 | `coder` | Implementacion generica | Read, Write, Edit, Bash, Grep, Glob |
 | `typescript-specialist` | Implementacion TypeScript | Read, Write, Edit, Bash, Grep, Glob |
 | `cicd-engineer` | CI/CD y deploy | Read, Write, Edit, Bash, Grep, Glob |
+| `backend-dev` | APIs, servidor, middleware | Read, Write, Edit, Bash, Grep, Glob |
+| `database-specialist` | Schema, queries, migraciones | Read, Edit, Bash, Grep, Glob |
+| `performance-optimizer` | Benchmarks y bottlenecks | Read, Bash, Grep, Glob |
+| `docs-lookup` | Docs de librerias via Context7 | Read, Grep, context7 MCP |
+| `pr-manager` | Pull requests y git workflows | Read, Write, Edit, Bash, Grep, Glob |
 
 **NO uses** nombres inventados como `research-agent`, `dev-specialist`, `bug-fixer`. No existen.
 

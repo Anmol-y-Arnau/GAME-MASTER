@@ -189,13 +189,55 @@ function buildIndex() {
   }
 
   if (agents.length > 0) {
+    // Categorize agents for discoverability
+    const agentCats = {
+      'Language Reviewers (use for code review in specific languages)': [],
+      'Build Resolvers (use when build/compilation fails)': [],
+      'GitHub/PR (use for repo management, PRs, issues, releases)': [],
+      'Architecture & Planning': [],
+      'Research & Documentation': [],
+      'ML/AI': [],
+      'Communication': [],
+      'Infrastructure (internal — rarely for user tasks)': [],
+    };
+
+    for (const a of agents) {
+      const n = a.name.toLowerCase();
+      const d = a.desc.toLowerCase();
+      if (/reviewer/.test(n) && /cpp|kotlin|flutter|rust|python|go/.test(n)) {
+        agentCats['Language Reviewers (use for code review in specific languages)'].push(a);
+      } else if (/build-resolver|build.*resolver/.test(n)) {
+        agentCats['Build Resolvers (use when build/compilation fails)'].push(a);
+      } else if (/github|pr-|issue|release|swarm-pr|swarm-issue|sync-coord|workflow-auto|repo-|project-board|multi-repo/.test(n)) {
+        agentCats['GitHub/PR (use for repo management, PRs, issues, releases)'].push(a);
+      } else if (/architect|planner|goal|template|migration|spec/.test(n)) {
+        agentCats['Architecture & Planning'].push(a);
+      } else if (/research|docs|api-docs/.test(n)) {
+        agentCats['Research & Documentation'].push(a);
+      } else if (/ml-|neural|safla|sona|pytorch/.test(n)) {
+        agentCats['ML/AI'].push(a);
+      } else if (/chief|staff/.test(n)) {
+        agentCats['Communication'].push(a);
+      } else if (/byzantine|raft|crdt|gossip|quorum|consensus|trading|matrix|pagerank|payment|mesh|adaptive|hierarchical|swarm-memory|collective|worker-spec|scout|queen|codex|dual-orch|load-balan|resource-alloc|benchmark-suite|topology|performance-monitor|performance-bench|security-manager|flow-nexus|hive-mind|v3-/.test(n)) {
+        agentCats['Infrastructure (internal — rarely for user tasks)'].push(a);
+      } else {
+        agentCats['Architecture & Planning'].push(a);
+      }
+    }
+
     lines.push(`## Agents (${agents.length} not in catalog)`);
     lines.push('');
-    for (const a of agents) {
-      const desc = a.desc.length > 80 ? a.desc.slice(0, 77) + '...' : a.desc;
-      lines.push(`- ${a.name}: ${desc}`);
+    for (const [cat, items] of Object.entries(agentCats)) {
+      if (items.length === 0) continue;
+      lines.push(`### ${cat}`);
+      for (const a of items) {
+        const desc = (a.desc && a.desc !== '|' && a.desc.length > 1)
+          ? (a.desc.length > 80 ? a.desc.slice(0, 77) + '...' : a.desc)
+          : '(see agent definition for details)';
+        lines.push(`- ${a.name}: ${desc}`);
+      }
+      lines.push('');
     }
-    lines.push('');
   }
 
   try {
