@@ -166,6 +166,11 @@ const DOMAIN_KEYWORDS = {
   diagrams: { keywords: ['diagrama', 'diagram', 'flowchart', 'mermaid', 'sequence diagram', 'gantt', 'er diagram', 'architecture diagram', 'visualizacion'], agents: [], skills: ['mermaidjs-v11'] },
   mcp_dev: { keywords: ['mcp server', 'crear mcp', 'build mcp', 'fastmcp', 'mcp tool', 'mcp custom'], agents: [], skills: ['mcp-builder'] },
   repo_analysis: { keywords: ['repomix', 'analizar repo', 'analyze repo', 'onboarding', 'codebase analysis', 'empaquetar repo', 'pack repo'], agents: [], skills: ['repomix'] },
+  analytics: { keywords: ['analytics', 'tracking', 'mixpanel', 'google analytics', 'evento tracking', 'event tracking', 'metricas usuario', 'user metrics'], agents: [], skills: ['analytics-tracking'] },
+  seo_programmatic: { keywords: ['programmatic seo', 'seo at scale', 'seo a escala', 'paginas seo', 'seo programatico', 'seo programmatic', 'paginas automaticas'], agents: [], skills: ['programmatic-seo'] },
+  site_architecture: { keywords: ['site architecture', 'arquitectura sitio', 'arquitectura del sitio', 'estructura de urls', 'estructura urls', 'url structure', 'arquitectura web', 'arquitectura de la web'], agents: [], skills: ['site-architecture'] },
+  onboarding_code: { keywords: ['onboarding codebase', 'entender codebase', 'understand codebase', 'nuevo al proyecto', 'new to project', 'explorar codigo', 'explore code'], agents: [], skills: ['codebase-onboarding'] },
+  retrospective: { keywords: ['retrospectiva', 'retrospective', 'retro semanal', 'weekly retro', 'que hicimos', 'what we did'], agents: [], skills: ['retro'] },
   git: { keywords: ['git ', 'commit', 'branch', 'merge', 'pull request', 'push '], agents: ['pr-manager'], skills: [] },
 };
 

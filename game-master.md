@@ -314,6 +314,26 @@ El router detecta el dominio y recomienda skills. El catalogo completo:
 | TDD workflow | `superpowers-test-driven-development` |
 | Code review recibido | `superpowers-receiving-code-review` |
 
+### SEO Avanzado
+| Operacion | Skill |
+|---|---|
+| SEO programatico (paginas a escala) | `programmatic-seo` |
+| Schema markup / JSON-LD | `schema-markup` |
+| Arquitectura de sitio (URLs, IA) | `site-architecture` |
+| Analytics tracking | `analytics-tracking` |
+
+### Workflows y Meta-Skills
+| Operacion | Skill |
+|---|---|
+| Pipeline review completo (CEO+design+eng) | `autoplan` |
+| Pair programming (driver/navigator) | `pair-programming` |
+| YC Office Hours (producto) | `office-hours` |
+| Pensar antes de construir | `product-lens` |
+| Retrospectiva semanal | `retro` |
+| Picker interactivo de agentes | `team-builder` |
+| Onboarding a codebase desconocido | `codebase-onboarding` |
+| Verificacion adversarial (2+ revisores) | `santa-method` |
+
 ### Herramientas Base
 | Operacion | USAR | NO usar |
 |---|---|---|
