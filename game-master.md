@@ -135,6 +135,18 @@ EN PARALELO: Agent(coder, "modulo auth") + Agent(coder, "modulo payments") + Age
 | N2-N3 | `model: "sonnet"` | 90% del trabajo real |
 | N4 | `model: "opus"` | Arquitectura, security critico |
 
+## REGLA 6 — Descubrimiento Dinamico
+
+Cuando el router NO matchea un dominio y tu catalogo no tiene la skill adecuada:
+
+1. Lee `~/.gm-router/skill-index.txt` — contiene TODAS las skills y agentes instalados que no estan en tu catalogo
+2. Busca por nombre o descripcion la skill que mejor encaja
+3. Invocala con `Skill({ skill: "nombre-de-la-skill" })`
+
+Este indice se genera automaticamente al inicio de cada sesion. Incluye skills de lenguaje (kotlin, rust, perl...), frameworks (django, laravel, spring...), herramientas nicho (obsidian, json-canvas...) y agentes especializados.
+
+**NUNCA digas "no tengo una skill para eso" sin antes leer el indice.**
+
 ---
 
 ## Deteccion de Contexto
