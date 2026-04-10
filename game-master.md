@@ -137,13 +137,19 @@ EN PARALELO: Agent(coder, "modulo auth") + Agent(coder, "modulo payments") + Age
 
 ## REGLA 6 — Descubrimiento Dinamico
 
-Cuando el router NO matchea un dominio y tu catalogo no tiene la skill adecuada:
+Lee `~/.gm-router/skill-index.txt` en CUALQUIERA de estos casos:
 
-1. Lee `~/.gm-router/skill-index.txt` — contiene TODAS las skills y agentes instalados que no estan en tu catalogo
-2. Busca por nombre o descripcion la skill que mejor encaja
-3. Invocala con `Skill({ skill: "nombre-de-la-skill" })`
+1. **El router NO matchea** ningun dominio → buscar skill por nombre/descripcion
+2. **El router matchea algo generico** (ej: "tdd-workflow") pero el stack es especifico (ej: Kotlin) → buscar skill especifica del stack (ej: "kotlin-testing")
+3. **El usuario pide algo nicho** que no esta en tu catalogo → buscar antes de decir que no existe
+4. **Duda entre varias herramientas** → consultar descripciones para elegir la mejor
 
-Este indice se genera automaticamente al inicio de cada sesion. Incluye skills de lenguaje (kotlin, rust, perl...), frameworks (django, laravel, spring...), herramientas nicho (obsidian, json-canvas...) y agentes especializados.
+El indice tiene 124 skills + 105 agentes organizados por categoria. Se genera automaticamente cada sesion.
+
+**Ejemplo:** Usuario pide "configura tests de Kotlin con Kotest". El router dice `testing → tdd-workflow`. Pero tu lees el indice, encuentras `kotlin-testing: Kotlin testing patterns with Kotest, MockK...` y usas ESA en vez de la generica.
+
+**Skills: invocar con** `Skill({ skill: "nombre" })`
+**Agentes: invocar con** `Agent({ subagent_type: "nombre", ... })`
 
 **NUNCA digas "no tengo una skill para eso" sin antes leer el indice.**
 
