@@ -71,13 +71,17 @@ function classifyComplexity(prompt) {
   const lower = prompt.toLowerCase();
   const words = lower.split(/\s+/).length;
 
-  // N1 Trivial signals
+  // N1 escalation guard: these topics are NEVER trivial even if phrased simply
+  const neverTrivial = /\b(bug|login|auth|password|session|token|database|schema|deploy|migration|payment|pago|seguridad|security)\b/i;
+
+  // N1 Trivial signals — only truly mechanical changes
   const trivialPatterns = [
-    /^(cambia|change|rename|fix typo|arregla|corrige)\s/,
-    /version/i, /--version/, /que version/i, /what version/i,
+    /^(cambia|change|rename|fix typo|corrige)\s/,
+    /\bversion\b/i, /--version/, /que version/i, /what version/i,
     /^ls\b/, /^cat\b/, /^pwd\b/,
+    /\b(typo|color|texto|text|string|label|placeholder|titulo|title)\b/i,
   ];
-  if (words < 15 && trivialPatterns.some(p => p.test(lower))) return 'N1';
+  if (words < 15 && trivialPatterns.some(p => p.test(lower)) && !neverTrivial.test(lower)) return 'N1';
 
   // N4 Complex signals
   const complexPatterns = [
@@ -93,9 +97,10 @@ function classifyComplexity(prompt) {
 
   // N3 Moderate signals
   const moderatePatterns = [
-    /endpoint|api\s|componente|component/i,
-    /crud|tabla|table|migracion|migration/i,
-    /integr(a|e)/i,
+    /\bendpoint\b|\bapi\s/i,
+    /\bcomponente\b|\bcomponent\b/i,
+    /\bcrud\b|\btabla\b|\btable\b|\bmigracion\b|\bmigration\b/i,
+    /\bintegr(a|e)/i,
     /\b(crea|create|implementa|implement|build|construye)\b.*\b(sistema|system|servicio|service|modulo|module)\b/i,
   ];
   if (moderatePatterns.some(p => p.test(lower)) || words > 40) return 'N3';
@@ -104,28 +109,52 @@ function classifyComplexity(prompt) {
   return 'N2';
 }
 
-// ─── Domain Detection (deterministic) ───
+// ─── Domain Detection (deterministic, word-boundary safe) ───
+
+// Keywords shorter than 4 chars need word boundary matching to avoid
+// false positives (e.g. "ci" inside "valoraCIon", "pr" inside "PRopiedad").
+// Longer keywords and multi-word phrases are safe with includes().
+const WORD_BOUNDARY_THRESHOLD = 4;
+
+// Pre-compiled regex cache for short keywords (avoids recompilation per prompt)
+const _regexCache = new Map();
+function getWordBoundaryRegex(kw) {
+  if (!_regexCache.has(kw)) {
+    // Escape regex special chars in keyword, then wrap with \b
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    _regexCache.set(kw, new RegExp(`\\b${escaped}\\b`, 'i'));
+  }
+  return _regexCache.get(kw);
+}
+
+function keywordMatches(lower, kw) {
+  if (kw.length < WORD_BOUNDARY_THRESHOLD) {
+    return getWordBoundaryRegex(kw).test(lower);
+  }
+  // Multi-word phrases and long keywords: includes() is safe and faster
+  return lower.includes(kw);
+}
 
 const DOMAIN_KEYWORDS = {
-  database: { keywords: ['database', 'db', 'schema', 'migration', 'query', 'sql', 'tabla', 'base de datos', 'prisma', 'supabase'], agents: ['database-specialist'], skills: ['database-migrations'] },
+  database: { keywords: ['database', 'schema', 'migration', 'query', 'sql', 'tabla', 'base de datos', 'prisma', 'supabase'], agents: ['database-specialist'], skills: ['database-migrations'] },
   security: { keywords: ['auth', 'security', 'token', 'password', 'encrypt', 'vulnerability', 'owasp', 'seguridad', 'login', 'session'], agents: ['security-auditor'], skills: ['security-scan'], gstack: '/cso' },
-  frontend: { keywords: ['ui', 'ux', 'frontend', 'component', 'css', 'layout', 'responsive', 'design', 'diseno', 'boton', 'button', 'pagina', 'page'], agents: ['typescript-specialist'], skills: ['frontend-design', 'ui-ux-pro-max', 'building-components'], gstack: '/design-review' },
-  backend: { keywords: ['api', 'endpoint', 'server', 'rest', 'graphql', 'middleware', 'route', 'controller'], agents: ['backend-dev'], skills: ['backend-patterns', 'api-design'] },
-  testing: { keywords: ['test', 'tdd', 'e2e', 'coverage', 'jest', 'vitest', 'playwright', 'qa'], agents: ['tester'], skills: ['tdd-workflow', 'e2e-testing'], gstack: '/qa' },
-  deploy: { keywords: ['deploy', 'vercel', 'ci', 'cd', 'pipeline', 'docker', 'ship', 'release'], agents: ['cicd-engineer'], skills: ['vercel-deploy', 'deployment-patterns'], gstack: '/ship' },
-  seo: { keywords: ['seo', 'meta tag', 'crawl', 'sitemap', 'robots', 'schema markup', 'keywords'], agents: [], skills: [], commands: ['/seo-audit'] },
-  performance: { keywords: ['performance', 'benchmark', 'optimize', 'slow', 'lento', 'rapido', 'cache', 'bundle'], agents: ['performance-optimizer'], skills: ['performance-analysis'] },
-  documentation: { keywords: ['doc', 'readme', 'documentation', 'api doc', 'swagger', 'openapi'], agents: ['docs-lookup'], skills: ['documentation-lookup', 'api-design'] },
-  design: { keywords: ['canvas', 'theme', 'art', 'typography', 'color', 'palette', 'visual', 'logo'], agents: [], skills: ['canvas-design', 'theme-factory', 'algorithmic-art', 'ui-ux-pro-max'] },
+  frontend: { keywords: ['frontend', 'component', 'css', 'layout', 'responsive', 'diseno', 'boton', 'button', 'pagina'], agents: ['typescript-specialist'], skills: ['frontend-design', 'ui-ux-pro-max', 'building-components'], gstack: '/design-review' },
+  backend: { keywords: ['api ', 'endpoint', 'server', 'rest ', 'graphql', 'middleware', 'route', 'controller'], agents: ['backend-dev'], skills: ['backend-patterns', 'api-design'] },
+  testing: { keywords: ['test', 'tdd', 'e2e', 'coverage', 'jest', 'vitest', 'playwright'], agents: ['tester'], skills: ['tdd-workflow', 'e2e-testing'], gstack: '/qa' },
+  deploy: { keywords: ['deploy', 'vercel', 'ci/cd', 'cicd', 'pipeline', 'docker', 'release'], agents: ['cicd-engineer'], skills: ['vercel-deploy', 'deployment-patterns'], gstack: '/ship' },
+  seo: { keywords: ['seo', 'meta tag', 'crawl', 'sitemap', 'robots', 'schema markup'], agents: [], skills: [], commands: ['/seo-audit'] },
+  performance: { keywords: ['performance', 'benchmark', 'optimize', 'slow', 'lento', 'cache', 'bundle'], agents: ['performance-optimizer'], skills: ['performance-analysis'] },
+  documentation: { keywords: ['readme', 'documentation', 'api doc', 'swagger', 'openapi'], agents: ['docs-lookup'], skills: ['documentation-lookup', 'api-design'] },
+  design: { keywords: ['canvas', 'theme', 'typography', 'color palette', 'visual design', 'logo'], agents: [], skills: ['canvas-design', 'theme-factory', 'algorithmic-art', 'ui-ux-pro-max'] },
   browser: { keywords: ['browser', 'chrome', 'scrape', 'web page', 'navigate', 'screenshot'], agents: [], skills: ['chrome-bridge-automation'], gstack: '/browse' },
   review: { keywords: ['review', 'revisar', 'code review', 'pr review', 'pull request'], agents: ['reviewer', 'code-analyzer'], skills: [], gstack: '/review' },
-  planning: { keywords: ['plan', 'planifica', 'roadmap', 'prd', 'requirements', 'spec'], agents: ['planner', 'architect'], skills: ['make-plan', 'blueprint'], gstack: '/plan-ceo-review' },
-  excel: { keywords: ['excel', 'spreadsheet', 'xlsx', 'csv', 'pivot', 'chart'], agents: [], skills: ['xlsx'], mcp: 'excel-mcp-server' },
-  documents: { keywords: ['pdf', 'contrato', 'contract', 'informe', 'report', 'documento', 'document', 'word', 'docx', 'powerpoint', 'pptx', 'presentacion', 'presentation', 'slide'], agents: [], skills: ['pdf', 'docx', 'pptx'] },
-  diagrams: { keywords: ['diagrama', 'diagram', 'flowchart', 'mermaid', 'sequence', 'gantt', 'er diagram', 'architecture diagram', 'visualizacion', 'visualization'], agents: [], skills: ['mermaidjs-v11'] },
+  planning: { keywords: ['plan ', 'planifica', 'roadmap', 'prd', 'requirements'], agents: ['planner', 'architect'], skills: ['make-plan', 'blueprint'], gstack: '/plan-ceo-review' },
+  excel: { keywords: ['excel', 'spreadsheet', 'xlsx', 'pivot', 'chart'], agents: [], skills: ['xlsx'], mcp: 'excel-mcp-server' },
+  documents: { keywords: ['pdf', 'contrato', 'contract', 'informe', 'report', 'documento', 'document', 'docx', 'powerpoint', 'pptx', 'presentacion', 'presentation', 'slide'], agents: [], skills: ['pdf', 'docx', 'pptx'] },
+  diagrams: { keywords: ['diagrama', 'diagram', 'flowchart', 'mermaid', 'sequence diagram', 'gantt', 'er diagram', 'architecture diagram', 'visualizacion'], agents: [], skills: ['mermaidjs-v11'] },
   mcp_dev: { keywords: ['mcp server', 'crear mcp', 'build mcp', 'fastmcp', 'mcp tool', 'mcp custom'], agents: [], skills: ['mcp-builder'] },
   repo_analysis: { keywords: ['repomix', 'analizar repo', 'analyze repo', 'onboarding', 'codebase analysis', 'empaquetar repo', 'pack repo'], agents: [], skills: ['repomix'] },
-  git: { keywords: ['git', 'commit', 'branch', 'merge', 'pr', 'pull request', 'push'], agents: ['pr-manager'], skills: [] },
+  git: { keywords: ['git ', 'commit', 'branch', 'merge', 'pull request', 'push '], agents: ['pr-manager'], skills: [] },
 };
 
 function detectDomains(prompt) {
@@ -133,7 +162,7 @@ function detectDomains(prompt) {
   const matched = [];
   for (const [domain, config] of Object.entries(DOMAIN_KEYWORDS)) {
     for (const kw of config.keywords) {
-      if (lower.includes(kw)) {
+      if (keywordMatches(lower, kw)) {
         matched.push({ domain, ...config });
         break;
       }
