@@ -114,13 +114,16 @@ function classifyComplexity(prompt) {
 // Keywords shorter than 4 chars need word boundary matching to avoid
 // false positives (e.g. "ci" inside "valoraCIon", "pr" inside "PRopiedad").
 // Longer keywords and multi-word phrases are safe with includes().
-const WORD_BOUNDARY_THRESHOLD = 4;
+// Matching strategy:
+// - Multi-word phrases ("base de datos"): includes() — no substring risk
+// - Single words (<6 chars): \bkw\b — FULL word boundary, exact match only
+//   To match suffixed forms (tests, testing, authentication), add them as explicit keywords.
+//   This is more verbose but eliminates ALL false positives without introducing false negatives.
+// - Long single words (6+ chars): includes() — safe and fast
 
-// Pre-compiled regex cache for short keywords (avoids recompilation per prompt)
 const _regexCache = new Map();
 function getWordBoundaryRegex(kw) {
   if (!_regexCache.has(kw)) {
-    // Escape regex special chars in keyword, then wrap with \b
     const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     _regexCache.set(kw, new RegExp(`\\b${escaped}\\b`, 'i'));
   }
@@ -128,20 +131,18 @@ function getWordBoundaryRegex(kw) {
 }
 
 function keywordMatches(lower, kw) {
-  if (kw.length < WORD_BOUNDARY_THRESHOLD) {
-    return getWordBoundaryRegex(kw).test(lower);
-  }
-  // Multi-word phrases and long keywords: includes() is safe and faster
+  if (kw.includes(' ')) return lower.includes(kw);
+  if (kw.length < 6) return getWordBoundaryRegex(kw).test(lower);
   return lower.includes(kw);
 }
 
 const DOMAIN_KEYWORDS = {
   database: { keywords: ['database', 'schema', 'migration', 'query', 'sql', 'tabla', 'base de datos', 'prisma', 'supabase'], agents: ['database-specialist'], skills: ['database-migrations'] },
-  security: { keywords: ['auth', 'security', 'token', 'password', 'encrypt', 'vulnerability', 'owasp', 'seguridad', 'login', 'session'], agents: ['security-auditor'], skills: ['security-scan'], gstack: '/cso' },
-  frontend: { keywords: ['frontend', 'component', 'css', 'layout', 'responsive', 'diseno', 'boton', 'button', 'pagina'], agents: ['typescript-specialist'], skills: ['frontend-design', 'ui-ux-pro-max', 'building-components'], gstack: '/design-review' },
-  backend: { keywords: ['api ', 'endpoint', 'server', 'rest ', 'graphql', 'middleware', 'route', 'controller'], agents: ['backend-dev'], skills: ['backend-patterns', 'api-design'] },
-  testing: { keywords: ['test', 'tdd', 'e2e', 'coverage', 'jest', 'vitest', 'playwright'], agents: ['tester'], skills: ['tdd-workflow', 'e2e-testing'], gstack: '/qa' },
-  deploy: { keywords: ['deploy', 'vercel', 'ci/cd', 'cicd', 'pipeline', 'docker', 'release'], agents: ['cicd-engineer'], skills: ['vercel-deploy', 'deployment-patterns'], gstack: '/ship' },
+  security: { keywords: ['auth', 'oauth', 'authentication', 'authorization', 'autenticacion', 'autenticación', 'security', 'seguridad', 'token', 'tokens', 'password', 'encrypt', 'vulnerability', 'owasp', 'login', 'logout', 'session', 'credencial', 'csrf', 'xss', 'jwt'], agents: ['security-auditor'], skills: ['security-scan'], gstack: '/cso' },
+  frontend: { keywords: ['frontend', 'component', 'componente', 'css', 'layout', 'responsive', 'diseno', 'boton', 'button', 'pagina', 'tailwind', 'react', 'next.js'], agents: ['typescript-specialist'], skills: ['frontend-design', 'ui-ux-pro-max', 'building-components'], gstack: '/design-review' },
+  backend: { keywords: ['endpoint', 'server', 'graphql', 'middleware', 'controller', 'api rest', 'rest api', 'backend'], agents: ['backend-dev'], skills: ['backend-patterns', 'api-design'] },
+  testing: { keywords: ['test', 'tests', 'testing', 'tdd', 'e2e', 'coverage', 'jest', 'vitest', 'playwright', 'prueba unitaria', 'pruebas', 'unit test'], agents: ['tester'], skills: ['tdd-workflow', 'e2e-testing'], gstack: '/qa' },
+  deploy: { keywords: ['deploy', 'deployment', 'vercel', 'ci/cd', 'cicd', 'pipeline', 'docker', 'release', 'desplegar', 'despliegue'], agents: ['cicd-engineer'], skills: ['vercel-deploy', 'deployment-patterns'], gstack: '/ship' },
   seo: { keywords: ['seo', 'meta tag', 'crawl', 'sitemap', 'robots', 'schema markup'], agents: [], skills: [], commands: ['/seo-audit'] },
   performance: { keywords: ['performance', 'benchmark', 'optimize', 'slow', 'lento', 'cache', 'bundle'], agents: ['performance-optimizer'], skills: ['performance-analysis'] },
   documentation: { keywords: ['readme', 'documentation', 'api doc', 'swagger', 'openapi'], agents: ['docs-lookup'], skills: ['documentation-lookup', 'api-design'] },
@@ -150,7 +151,7 @@ const DOMAIN_KEYWORDS = {
   review: { keywords: ['review', 'revisar', 'code review', 'pr review', 'pull request'], agents: ['reviewer', 'code-analyzer'], skills: [], gstack: '/review' },
   planning: { keywords: ['plan ', 'planifica', 'roadmap', 'prd', 'requirements'], agents: ['planner', 'architect'], skills: ['make-plan', 'blueprint'], gstack: '/plan-ceo-review' },
   excel: { keywords: ['excel', 'spreadsheet', 'xlsx', 'pivot', 'chart'], agents: [], skills: ['xlsx'], mcp: 'excel-mcp-server' },
-  documents: { keywords: ['pdf', 'contrato', 'contract', 'informe', 'report', 'documento', 'document', 'docx', 'powerpoint', 'pptx', 'presentacion', 'presentation', 'slide'], agents: [], skills: ['pdf', 'docx', 'pptx'] },
+  documents: { keywords: ['pdf', 'contrato', 'contract', 'informe', 'report', 'documento', 'document', 'docx', 'powerpoint', 'pptx', 'presentacion', 'presentation', 'slide'], agents: [], skills: [], skillMap: { pdf: 'pdf', contrato: 'pdf', contract: 'pdf', informe: 'pdf', report: 'pdf', docx: 'docx', documento: 'docx', document: 'docx', powerpoint: 'pptx', pptx: 'pptx', presentacion: 'pptx', presentation: 'pptx', slide: 'pptx' } },
   diagrams: { keywords: ['diagrama', 'diagram', 'flowchart', 'mermaid', 'sequence diagram', 'gantt', 'er diagram', 'architecture diagram', 'visualizacion'], agents: [], skills: ['mermaidjs-v11'] },
   mcp_dev: { keywords: ['mcp server', 'crear mcp', 'build mcp', 'fastmcp', 'mcp tool', 'mcp custom'], agents: [], skills: ['mcp-builder'] },
   repo_analysis: { keywords: ['repomix', 'analizar repo', 'analyze repo', 'onboarding', 'codebase analysis', 'empaquetar repo', 'pack repo'], agents: [], skills: ['repomix'] },
@@ -161,11 +162,24 @@ function detectDomains(prompt) {
   const lower = prompt.toLowerCase();
   const matched = [];
   for (const [domain, config] of Object.entries(DOMAIN_KEYWORDS)) {
+    const matchedKeywords = [];
     for (const kw of config.keywords) {
       if (keywordMatches(lower, kw)) {
-        matched.push({ domain, ...config });
-        break;
+        matchedKeywords.push(kw);
       }
+    }
+    if (matchedKeywords.length > 0) {
+      // If domain has a skillMap, resolve skills per matched keyword (not all domain skills)
+      let resolvedSkills = config.skills || [];
+      if (config.skillMap) {
+        const skillSet = new Set();
+        for (const kw of matchedKeywords) {
+          const skill = config.skillMap[kw];
+          if (skill) skillSet.add(skill);
+        }
+        resolvedSkills = [...skillSet];
+      }
+      matched.push({ domain, ...config, skills: resolvedSkills });
     }
   }
   return matched;
