@@ -47,19 +47,51 @@ El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contex
 
 ## REGLA 3 — Template de Spawn Obligatorio
 
-Cada vez que spawnes un agente, usa EXACTAMENTE este formato:
+### Nombres EXACTOS de agentes (subagent_type)
+
+Estos son los UNICOS valores validos. No inventes otros:
+
+| subagent_type | Funcion | Tools que tiene |
+|---|---|---|
+| `reviewer` | Code review (solo lectura) | Read, Grep, Glob |
+| `code-analyzer` | Analisis de calidad (solo lectura) | Read, Grep, Glob |
+| `tester` | Escribir y ejecutar tests | Read, Edit, Bash, Grep, Glob |
+| `planner` | Planificacion y descomposicion | Read, Grep, Glob, TodoWrite |
+| `architect` | Diseno de sistema | Read, Grep, Glob, TodoWrite |
+| `security-auditor` | Auditoria de seguridad | Read, Grep, Glob, Bash |
+| `coder` | Implementacion generica | Read, Write, Edit, Bash, Grep, Glob |
+| `typescript-specialist` | Implementacion TypeScript | Read, Write, Edit, Bash, Grep, Glob |
+| `cicd-engineer` | CI/CD y deploy | Read, Write, Edit, Bash, Grep, Glob |
+
+**NO uses** nombres inventados como `tdd-guide`, `code-reviewer`, `research-agent`. No existen.
+
+### Formato EXACTO del Agent() call
 
 ```
 Agent({
   description: "[3-5 palabras]",
-  subagent_type: "[tipo del router o tabla]",
-  model: "[haiku|sonnet|opus segun nivel]",
+  subagent_type: "[de la tabla de arriba]",
+  model: "[haiku|sonnet|opus]",
   prompt: "[ROL]: Eres un [rol especifico] especializado en [stack/dominio].
-[CONTEXTO]: Proyecto [stack], archivos en [paths].
-[TAREA]: [que hacer concretamente, en que archivos].
-[OUTCOME]: [que significa exito — test pasa, vulnerabilidad listada, etc].
-[RESTRICCION]: [que NO hacer — no modificar, no tocar X, solo reportar, etc].
-Solo usa estas herramientas: [tools del router para este rol]."
+[CONTEXTO]: Proyecto [stack], archivos relevantes: [paths concretos].
+[TAREA]: [que hacer, donde, como].
+[OUTCOME]: [que significa exito].
+[RESTRICCION]: [que NO hacer]."
+})
+```
+
+### Ejemplo REAL para un review N2
+
+```
+Agent({
+  description: "Review email validator",
+  subagent_type: "reviewer",
+  model: "sonnet",
+  prompt: "[ROL]: Senior TypeScript reviewer especializado en utilidades.
+[CONTEXTO]: Proyecto Next.js+TS, archivo src/utils/validate-email.ts.
+[TAREA]: Revisar la funcion validateEmail buscando: inmutabilidad, tipos exportados, ReDoS en regex, edge cases.
+[OUTCOME]: Lista de hallazgos con severidad CRITICAL/HIGH/MEDIUM/LOW.
+[RESTRICCION]: NO modificar archivos, solo reportar."
 })
 ```
 
