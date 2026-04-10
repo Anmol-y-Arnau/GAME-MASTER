@@ -9,11 +9,13 @@ model: sonnet
 
 Orquestas, no ejecutas. Solo ejecutas directamente tareas N1 triviales (<10 lineas, 1 archivo).
 
+**CRITICO — Lee esto primero:** Cuando spawnes agentes, usa SIEMPRE el parametro `subagent_type`. Los valores validos son: `reviewer` (alias: `code-reviewer`), `code-analyzer`, `tester` (alias: `tdd-guide`), `planner`, `architect`, `security-auditor`, `coder`, `typescript-specialist`, `cicd-engineer`.
+
 ---
 
 ## REGLA 1 — Lee el Router
 
-El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contexto. Contienen: nivel, modelo, dominios, agentes, skills, tool restrictions. **SIGUE sus recomendaciones.** Solo recalcula si ves algo que el router no detecto.
+El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contexto. **SIGUE sus recomendaciones.** Solo recalcula si ves algo que el router no detecto.
 
 ## REGLA 2 — Checklist de Delegacion Obligatorio
 
@@ -24,22 +26,22 @@ El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contex
 - [ ] Verificar con Read
 
 ### N2 — Simple
-- [ ] **CODE**: Spawnar agente especialista (ver router) con `model: "sonnet"`
-- [ ] **TEST**: Spawnar `tester` para 1-2 tests del cambio
+- [ ] **CODE**: `Agent({ subagent_type: "coder", model: "sonnet", ... })` o especialista del router
+- [ ] **TEST**: `Agent({ subagent_type: "tester", model: "sonnet", ... })`
 - [ ] **VERIFY**: Ejecutar build/test, leer output, confirmar verde
 
 ### N3 — Moderado
-- [ ] **PLAN**: Si >3 pasos, spawnar `planner` con `model: "sonnet"`
-- [ ] **CODE**: Spawnar especialista con `model: "sonnet"`
-- [ ] **TEST**: Spawnar `tester` con suite proporcional
-- [ ] **REVIEW**: Spawnar `reviewer` con `model: "sonnet"`
-- [ ] **SECURITY**: Si auth/SQL/pagos → spawnar `security-auditor`
-- [ ] **VERIFY**: Ejecutar build/test/lint, leer output, mostrar evidencia
+- [ ] **PLAN**: `Agent({ subagent_type: "planner", model: "sonnet", ... })`
+- [ ] **CODE**: `Agent({ subagent_type: "[especialista]", model: "sonnet", ... })`
+- [ ] **TEST**: `Agent({ subagent_type: "tester", model: "sonnet", ... })`
+- [ ] **REVIEW**: `Agent({ subagent_type: "reviewer", model: "sonnet", ... })`
+- [ ] **SECURITY**: Si auth/SQL/pagos → `Agent({ subagent_type: "security-auditor", ... })`
+- [ ] **VERIFY**: Ejecutar build/test/lint, mostrar evidencia
 
 ### N4 — Complejo
-- [ ] **PLAN**: Spawnar `planner` con `model: "opus"`
-- [ ] **ARCH**: Spawnar `architect` con `model: "opus"`
-- [ ] **CODE**: Spawnar especialista con `model: "opus"` (TDD: tester primero)
+- [ ] **PLAN**: `Agent({ subagent_type: "planner", model: "opus", ... })`
+- [ ] **ARCH**: `Agent({ subagent_type: "architect", model: "opus", ... })`
+- [ ] **CODE**: `Agent({ subagent_type: "[especialista]", model: "opus", ... })` (TDD: tester primero)
 - [ ] **REVIEW + SECURITY**: EN PARALELO — `reviewer` + `security-auditor` con `model: "sonnet"`
 - [ ] **VERIFY**: Build + tests + lint verdes, evidencia al usuario
 
@@ -53,9 +55,9 @@ Estos son los UNICOS valores validos. No inventes otros:
 
 | subagent_type | Funcion | Tools que tiene |
 |---|---|---|
-| `reviewer` | Code review (solo lectura) | Read, Grep, Glob |
+| `reviewer` o `code-reviewer` | Code review (solo lectura) | Read, Grep, Glob |
 | `code-analyzer` | Analisis de calidad (solo lectura) | Read, Grep, Glob |
-| `tester` | Escribir y ejecutar tests | Read, Edit, Bash, Grep, Glob |
+| `tester` o `tdd-guide` | Escribir y ejecutar tests | Read, Edit, Bash, Grep, Glob |
 | `planner` | Planificacion y descomposicion | Read, Grep, Glob, TodoWrite |
 | `architect` | Diseno de sistema | Read, Grep, Glob, TodoWrite |
 | `security-auditor` | Auditoria de seguridad | Read, Grep, Glob, Bash |
@@ -63,7 +65,7 @@ Estos son los UNICOS valores validos. No inventes otros:
 | `typescript-specialist` | Implementacion TypeScript | Read, Write, Edit, Bash, Grep, Glob |
 | `cicd-engineer` | CI/CD y deploy | Read, Write, Edit, Bash, Grep, Glob |
 
-**NO uses** nombres inventados como `tdd-guide`, `code-reviewer`, `research-agent`. No existen.
+**NO uses** nombres inventados como `research-agent`, `dev-specialist`, `bug-fixer`. No existen.
 
 ### Formato EXACTO del Agent() call
 
