@@ -16,6 +16,8 @@ const path = require('path');
 const CLAUDE_DIR = path.join(process.env.HOME || '', '.claude');
 const SKILLS_DIR = path.join(CLAUDE_DIR, 'skills');
 const AGENTS_DIR = path.join(CLAUDE_DIR, 'agents');
+const LOCAL_SKILLS_DIR = path.join(__dirname, 'skills');
+const LOCAL_AGENTS_DIR = path.join(__dirname, 'agents');
 const OUTPUT_DIR = path.join(process.env.HOME || '', '.gm-router');
 const OUTPUT_FILE = path.join(OUTPUT_DIR, 'skill-index.txt');
 
@@ -64,19 +66,20 @@ function extractFrontmatter(filePath) {
   }
 }
 
-function scanSkills() {
+function scanSkillsDir(skillsDir, seen) {
   const results = [];
-  if (!fs.existsSync(SKILLS_DIR)) return results;
+  if (!fs.existsSync(skillsDir)) return results;
 
-  const entries = fs.readdirSync(SKILLS_DIR, { withFileTypes: true });
+  const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
   for (const entry of entries) {
     const name = entry.name;
     if (CATALOGED.has(name)) continue;
     if (name.startsWith('.') || name === 'README.md') continue;
+    if (seen.has(name)) continue;
 
     // Check for SKILL.md in the skill directory
-    const skillMdPath = path.join(SKILLS_DIR, name, 'SKILL.md');
-    const indexMdPath = path.join(SKILLS_DIR, name, 'index.md');
+    const skillMdPath = path.join(skillsDir, name, 'SKILL.md');
+    const indexMdPath = path.join(skillsDir, name, 'index.md');
 
     let info = null;
     if (fs.existsSync(skillMdPath)) {
@@ -87,13 +90,16 @@ function scanSkills() {
 
     // For skills that are just directories with sub-skills (like document-skills)
     if (!info && entry.isDirectory()) {
-      const subEntries = fs.readdirSync(path.join(SKILLS_DIR, name), { withFileTypes: true });
+      const subEntries = fs.readdirSync(path.join(skillsDir, name), { withFileTypes: true });
       for (const sub of subEntries) {
-        if (sub.isDirectory() && !CATALOGED.has(sub.name)) {
-          const subSkillMd = path.join(SKILLS_DIR, name, sub.name, 'SKILL.md');
+        if (sub.isDirectory() && !CATALOGED.has(sub.name) && !seen.has(sub.name)) {
+          const subSkillMd = path.join(skillsDir, name, sub.name, 'SKILL.md');
           if (fs.existsSync(subSkillMd)) {
             const subInfo = extractFrontmatter(subSkillMd);
-            if (subInfo) results.push(subInfo);
+            if (subInfo) {
+              results.push(subInfo);
+              seen.add(subInfo.name);
+            }
           }
         }
       }
@@ -102,18 +108,26 @@ function scanSkills() {
 
     if (info) {
       results.push(info);
+      seen.add(info.name);
     } else {
       // Fallback: use directory name as skill name
       results.push({ name, desc: '(no description)' });
+      seen.add(name);
     }
   }
   return results;
 }
 
-function scanAgents() {
-  const results = [];
-  if (!fs.existsSync(AGENTS_DIR)) return results;
+function scanSkills() {
+  const seen = new Set();
+  // Local GAME-MASTER skills first → win on name collisions.
+  return [
+    ...scanSkillsDir(LOCAL_SKILLS_DIR, seen),
+    ...scanSkillsDir(SKILLS_DIR, seen),
+  ];
+}
 
+function scanAgents() {
   // Known agents already in game-master
   const knownAgents = new Set([
     'game-master', 'reviewer', 'code-reviewer', 'code-analyzer', 'analyst',
@@ -121,7 +135,11 @@ function scanAgents() {
     'coder', 'typescript-specialist', 'cicd-engineer',
   ]);
 
+  const results = [];
+  const seen = new Set();
+
   function walk(dir) {
+    if (!fs.existsSync(dir)) return;
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
@@ -129,13 +147,16 @@ function scanAgents() {
         walk(fullPath);
       } else if (entry.name.endsWith('.md')) {
         const info = extractFrontmatter(fullPath);
-        if (info && !knownAgents.has(info.name)) {
+        if (info && !knownAgents.has(info.name) && !seen.has(info.name)) {
           results.push(info);
+          seen.add(info.name);
         }
       }
     }
   }
 
+  // Local GAME-MASTER agents first → win on name collisions.
+  walk(LOCAL_AGENTS_DIR);
   walk(AGENTS_DIR);
   return results;
 }
