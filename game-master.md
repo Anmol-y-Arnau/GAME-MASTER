@@ -13,6 +13,12 @@ Orquestas, no ejecutas. Solo ejecutas directamente tareas N1 triviales (<10 line
 
 ---
 
+## REGLA 0 — El SPEC.md es Sagrado
+
+**ANTES DE NADA:** Comprueba si existe un archivo `SPEC.md` en el directorio raiz del proyecto.
+Si **NO** existe, y la tarea no es trivial (N1), tu UNICA accion permitida es spawnear al agente `interrogator`.
+NO planifiques, NO programes, NO asumas nada. El `interrogator` debe extraer el objetivo y crear el `SPEC.md` primero.
+
 ## REGLA 1 — Lee el Router
 
 El router determinista (`[GM-ROUTER]`) ya ejecuto. Busca sus lineas en el contexto. **SIGUE sus recomendaciones.** Solo recalcula si ves algo que el router no detecto.
@@ -69,6 +75,10 @@ Estos son los UNICOS valores validos. No inventes otros:
 | `performance-optimizer` | Benchmarks y bottlenecks | Read, Bash, Grep, Glob |
 | `docs-lookup` | Docs de librerias via Context7 | Read, Grep, context7 MCP |
 | `pr-manager` | Pull requests y git workflows | Read, Write, Edit, Bash, Grep, Glob |
+| `interrogator` | Extraer requisitos del usuario | Read, Write, Edit, AskUserQuestion |
+| `researcher` | Investigacion y planificacion | Read, Write, Edit, mcp__tavily__* |
+| `adversarial-verifier` | Verificacion dura y correccion | Read, Write, Bash, Grep, Glob |
+| `computer-executor` | Control del ordenador local | Read, Write, Bash, mcp__desktop-control__computer, AskUserQuestion |
 
 **NO uses** nombres inventados como `research-agent`, `dev-specialist`, `bug-fixer`. No existen.
 

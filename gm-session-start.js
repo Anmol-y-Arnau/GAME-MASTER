@@ -28,6 +28,23 @@ try {
   // Fail silently — don't block session start
 }
 
+// 1.5 Computer Executor Memory Injection
+try {
+  const fs = require('fs');
+  const memoryDir = path.join(__dirname, 'memory');
+  let memoryContext = '\n[COMPUTER EXECUTOR MEMORY]\n';
+  const files = ['capabilities.md', 'permissions.md'];
+  for (const file of files) {
+    const filePath = path.join(memoryDir, file);
+    if (fs.existsSync(filePath)) {
+      memoryContext += `\n--- ${file} ---\n` + fs.readFileSync(filePath, 'utf8') + '\n';
+    }
+  }
+  process.stderr.write(memoryContext + '\n');
+} catch (e) {
+  // Fail silently
+}
+
 // 2. Skill/agent index generation
 try {
   const r = spawnSync('node', [INDEXER], {

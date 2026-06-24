@@ -292,6 +292,16 @@ function getToolScope(level, agents) {
 // ─── Main Router ───
 
 function routePrompt(prompt, cwd) {
+  // 0. SPEC.md Check (Autonomous Builder)
+  const specPath = path.join(cwd, 'SPEC.md');
+  const hasSpec = fs.existsSync(specPath);
+  const isTrivial = classifyComplexity(prompt) === 'N1';
+  const lowerPrompt = prompt.toLowerCase();
+
+  if (!hasSpec && !isTrivial && !lowerPrompt.includes('rapido') && !lowerPrompt.includes('solo haz')) {
+    return `[GM-ROUTER]\nINTENT_LEVEL: N4\nDOMAINS: discovery\nAGENTS: interrogator\nSKILLS: autonomous-builder\nROUTER_NOTE: NO EXISTE SPEC.md. Obligatorio invocar al agente 'interrogator' para extraer requisitos usando AskUserQuestion. NO programar nada aun.`;
+  }
+
   const stacks = detectStack(cwd);
   const level = classifyComplexity(prompt);
   const domains = detectDomains(prompt);
